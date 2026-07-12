@@ -20,29 +20,60 @@ It handles:
 
 ## Install
 
-The skill folder is `itr-capital-gains/`. Drop it into a skills directory:
+The skill folder is `itr-capital-gains/`. It follows the portable
+[Agent Skills](https://code.visualstudio.com/docs/copilot/copilot-customization) `SKILL.md`
+convention, so the **same folder works across multiple agents** — only the destination directory
+differs:
 
-- **Personal (all workspaces):** `~/.agents/skills/`
-- **Repo-scoped:** `.github/skills/` inside a workspace
+| Tool | Personal skills directory |
+|---|---|
+| VS Code Copilot | `~/.agents/skills/` (or repo-scoped `.github/skills/`) |
+| Claude Code | `~/.claude/skills/` (or repo-scoped `.claude/skills/`) |
+| GitHub Copilot CLI | `~/.copilot/skills/` |
 
-### PowerShell (Windows)
+Drop `itr-capital-gains/` into whichever directory your tool uses, then reload the tool.
+
+### Quick install (PowerShell, Windows)
 
 ```powershell
 git clone https://github.com/<you>/itr-capital-gains-skill.git
-$dest = "$env:USERPROFILE\.agents\skills"
+cd itr-capital-gains-skill
+# pick your target dir:
+$dest = "$env:USERPROFILE\.agents\skills"     # VS Code Copilot
+# $dest = "$env:USERPROFILE\.claude\skills"   # Claude Code
+# $dest = "$env:USERPROFILE\.copilot\skills"  # Copilot CLI
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
-Copy-Item .\itr-capital-gains-skill\itr-capital-gains -Destination $dest -Recurse -Force
+Copy-Item .\itr-capital-gains -Destination $dest -Recurse -Force
 ```
 
-### bash (macOS / Linux)
+### Quick install (bash, macOS / Linux)
 
 ```bash
 git clone https://github.com/<you>/itr-capital-gains-skill.git
-mkdir -p ~/.agents/skills
-cp -r itr-capital-gains-skill/itr-capital-gains ~/.agents/skills/
+cd itr-capital-gains-skill
+dest="$HOME/.agents/skills"      # VS Code Copilot
+# dest="$HOME/.claude/skills"    # Claude Code
+# dest="$HOME/.copilot/skills"   # Copilot CLI
+mkdir -p "$dest"
+cp -r itr-capital-gains "$dest/"
 ```
 
-Restart VS Code (or reload the window) so Copilot picks up the new skill.
+Restart / reload your tool so it picks up the new skill.
+
+### Or use the install helper
+
+From the cloned repo, run the bundled script with your target tool:
+
+```powershell
+.\install.ps1 claude        # or: copilot (default) | copilot-cli
+```
+```bash
+./install.sh claude         # or: copilot (default) | copilot-cli
+```
+
+> The bundled scripts (`read_xlsx.ps1`, `build_112a_csv.ps1`) require **PowerShell** (`pwsh` on
+> macOS/Linux, built-in on Windows) and, for AIS PDFs, `pdftotext` on your PATH. The skill still works
+> without them — those steps just become manual.
 
 ## Usage
 
