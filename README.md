@@ -12,7 +12,7 @@ ITR-1/2/3/4 form selection.
 
 ## Install
 
-The skill lives in `itr-capital-gains/`. Clone, then drop it into your agent's skills directory:
+The skill lives in `itr2/`. Clone, then drop it into your agent's skills directory:
 
 | Agent | Skills directory |
 |---|---|

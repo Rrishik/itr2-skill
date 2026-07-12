@@ -1,5 +1,5 @@
 ---
-name: itr-capital-gains
+name: itr2
 description: 'Compute Indian ITR-2 capital gains and other-source income from broker/AIS documents and map them into the Income-Tax offline utility. USE WHEN: user is filing an Indian income-tax return (ITR-2/AY), has capital gains from stocks or mutual funds, needs STCG/LTCG/OS figures computed, needs a Schedule 112A CSV built for upload, asks where to enter values in the ITR utility, wants to reconcile broker statements against AIS/TIS, or holds foreign stocks/ESPP/RSU/foreign dividends needing Schedule FA and FTC. Handles Groww/Zerodha/broker capital-gains reports, Form 16, AIS, TIS, dividend reports, bank interest certificates, and foreign broker/ESPP statements. DO NOT USE FOR: business/professional income (needs ITR-3), non-Indian tax returns, or GST.'
 argument-hint: 'Point to the folder containing the tax documents'
 ---

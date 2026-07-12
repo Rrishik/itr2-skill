@@ -1,5 +1,5 @@
 <#
-  Install the itr-capital-gains skill into the chosen agent's skills directory.
+  Install the itr2 skill into the chosen agent's skills directory.
   Usage: .\install.ps1 [copilot|claude|copilot-cli]   (default: copilot)
 #>
 param([ValidateSet('copilot','claude','copilot-cli')][string]$Target = 'copilot')
@@ -10,8 +10,8 @@ $dest = switch ($Target) {
   'copilot-cli' { Join-Path $env:USERPROFILE '.copilot\skills' }
 }
 
-$src = Join-Path $PSScriptRoot 'itr-capital-gains'
+$src = Join-Path $PSScriptRoot 'itr2'
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
 Copy-Item $src -Destination $dest -Recurse -Force
-Write-Host "Installed itr-capital-gains -> $dest\itr-capital-gains"
+Write-Host "Installed itr2 -> $dest\itr2"
 Write-Host "Reload your agent to pick up the skill."

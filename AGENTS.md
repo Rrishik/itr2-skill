@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository packages a portable **Agent Skill**: `itr-capital-gains/` (an ITR-2 capital-gains
+This repository packages a portable **Agent Skill**: `itr2/` (an ITR-2 capital-gains
 computation assistant for Indian income-tax filing).
 
 ## Installing this skill on request
@@ -12,12 +12,12 @@ agent"* after cloning, do the following:
    - **VS Code Copilot** → `~/.agents/skills/`
    - **Claude Code** → `~/.claude/skills/`
    - **GitHub Copilot CLI** → `~/.copilot/skills/`
-2. Copy the `itr-capital-gains/` folder (this repo's skill folder) into that directory. Prefer the
+2. Copy the `itr2/` folder (this repo's skill folder) into that directory. Prefer the
    bundled helper if the environment can run it:
    - PowerShell: `./install.ps1 <copilot|claude|copilot-cli>`
    - bash: `./install.sh <copilot|claude|copilot-cli>`
    Otherwise copy the folder directly (`Copy-Item` / `cp -r`).
-3. Confirm the destination now contains `itr-capital-gains/SKILL.md`, and tell the user to reload
+3. Confirm the destination now contains `itr2/SKILL.md`, and tell the user to reload
    their agent so the skill is picked up.
 
 Do **not** commit or move any of the user's tax documents; treat all `*.pdf`, `*.csv`, and
@@ -25,4 +25,4 @@ Do **not** commit or move any of the user's tax documents; treat all `*.pdf`, `*
 
 ## What the skill does
 
-See [README.md](./README.md) and [itr-capital-gains/SKILL.md](./itr-capital-gains/SKILL.md).
+See [README.md](./README.md) and [itr2/SKILL.md](./itr2/SKILL.md).

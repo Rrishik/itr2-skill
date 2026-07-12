@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the itr-capital-gains skill into the chosen agent's skills directory.
+# Install the itr2 skill into the chosen agent's skills directory.
 # Usage: ./install.sh [copilot|claude|copilot-cli]   (default: copilot)
 set -euo pipefail
 
@@ -11,8 +11,8 @@ case "$target" in
   *) echo "Unknown target '$target'. Use: copilot | claude | copilot-cli" >&2; exit 1 ;;
 esac
 
-src="$(cd "$(dirname "$0")" && pwd)/itr-capital-gains"
+src="$(cd "$(dirname "$0")" && pwd)/itr2"
 mkdir -p "$dest"
 cp -r "$src" "$dest/"
-echo "Installed itr-capital-gains -> $dest/itr-capital-gains"
+echo "Installed itr2 -> $dest/itr2"
 echo "Reload your agent to pick up the skill."
