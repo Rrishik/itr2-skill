@@ -1,0 +1,16 @@
+# Tax documents / personal data — never commit
+*.pdf
+*.csv
+tax_input*.json
+ITR2_data_entry_sheet*.md
+docs/
+docs_*/
+*_data_entry_sheet*.md
+
+# Allow the CSV template if you intentionally add a blank one
+!template.csv
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.tmp
