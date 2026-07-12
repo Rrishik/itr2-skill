@@ -71,6 +71,11 @@ From the cloned repo, run the bundled script with your target tool:
 ./install.sh claude         # or: copilot (default) | copilot-cli
 ```
 
+### Or just ask your agent
+
+After cloning, open the repo in your agent and say **"install this skill"**. The repo's
+[AGENTS.md](./AGENTS.md) tells the agent where to copy it and how to verify — no manual paths needed.
+
 > The bundled scripts (`read_xlsx.ps1`, `build_112a_csv.ps1`) require **PowerShell** (`pwsh` on
 > macOS/Linux, built-in on Windows) and, for AIS PDFs, `pdftotext` on your PATH. The skill still works
 > without them — those steps just become manual.
