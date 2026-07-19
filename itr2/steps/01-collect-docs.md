@@ -26,6 +26,23 @@ senior-citizen status (DOB), regime preference, and whether a **separate** retur
 accounts. A resident holding *any* foreign asset must file **Schedule FA** regardless of sale; omission
 triggers Black Money Act penalties. If the user has none, note it and move on.
 
+## Confirm the source set before extracting
+List every file found in the folder, map each to its document type (table above), and present a short
+two-column status — **Identified** (file → type) and **Missing / unidentified** (expected-but-absent
+types, plus any file you couldn't classify). Then ask the user **only** about the Missing / unidentified
+line — do not re-confirm files already identified. Proceed once the user supplies the gaps or says there
+are none. Example:
+
+```
+Identified:
+  Salary_Form16.pdf        → Form 16
+  Indian_CapitalGains.xlsx → Broker capital-gains report
+  AIS.pdf                  → AIS
+Missing / unidentified:
+  - No bank interest certificate (savings/FD interest) — provide or confirm none
+  - mystery_report.xlsx — couldn't classify; what is it?
+```
+
 Once the basics are known, write **`work-context.json`** (see SKILL.md → Session state) capturing
 taxpayer/PAN, AY, residential status, senior-citizen flag, regime preference, and foreign-assets yes/no.
 Update it as later steps make decisions (chosen form, chosen regime, schedules that apply).
