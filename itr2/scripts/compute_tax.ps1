@@ -15,6 +15,8 @@
 #   {
 #     "ay": "2026-27", "senior_citizen": false,
 #     "salary_gross": 0,                 // before standard deduction
+#     "salary_hra_exemption": 0,         // s.10(13A) HRA - OLD regime only
+#     "salary_professional_tax": 0,      // s.16(iii) - OLD regime only
 #     "other_sources": { "dividend": 0, "savings_interest": 0, "fd_interest": 0, "interest": 0, "other": 0 },
 #     "house_property": 0,               // net (can be negative, capped -2L)
 #     "slab_rate_gains": 0,              // CG taxed at slab (debt MF s.50AA, foreign equity <24m, unlisted STCG)
@@ -46,6 +48,8 @@ function Prop($obj, $name) { if ($obj -and ($obj.PSObject.Properties.Name -conta
 
 $senior = [bool](Prop $in 'senior_citizen')
 $salaryGross = Num (Prop $in 'salary_gross')
+$hraExempt = Num (Prop $in 'salary_hra_exemption')      # OLD only
+$profTax = Num (Prop $in 'salary_professional_tax')     # OLD only
 $os = Prop $in 'other_sources'
 $dividend = Num (Prop $os 'dividend')
 # Interest can be split (savings_interest/fd_interest) or unsplit (interest); mirror schedule_os.ps1.
@@ -107,7 +111,9 @@ function Surcharge([double]$totalIncome, [double]$normalTax, [double]$specialTax
 
 function Compute-Regime([string]$name) {
     $stdDed = if ($name -eq 'new') { 75000 } else { 50000 }
-    $salaryNet = [math]::Max(0.0, $salaryGross - $stdDed)
+    # HRA (10(13A)) and professional tax (16(iii)) reduce salary under the OLD regime only.
+    $salaryDeductions = if ($name -eq 'new') { $stdDed } else { $stdDed + $hraExempt + $profTax }
+    $salaryNet = [math]::Max(0.0, $salaryGross - $salaryDeductions)
     $grossSlab = $salaryNet + $dividend + $interest + $hp + $slabGains
     if ($name -eq 'new') {
         $chapVI = $nps

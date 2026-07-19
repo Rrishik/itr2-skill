@@ -57,6 +57,7 @@ computes the balance. Example:
 {
   "taxpayer": "", "pan": "", "ay": "2026-27", "senior_citizen": false,
   "salary_gross": 0,
+  "salary_hra_exemption": 0, "salary_professional_tax": 0,
   "other_sources": { "dividend": 0, "savings_interest": 0, "fd_interest": 0 },
   "house_property": 0,
   "slab_rate_gains": 0,
@@ -72,6 +73,8 @@ computes the balance. Example:
   foreign equity held <24m, unlisted-share STCG. They add to slab income (never to `other_sources`).
 - `deduction_80ccd2` (employer NPS) is allowed under **both** regimes; everything in `deductions_old`
   is OLD-regime only.
+- `salary_hra_exemption` (s.10(13A)) and `salary_professional_tax` (s.16(iii)) reduce **salary** under the
+  **OLD regime only** — put them here, NOT in `deductions_old` (they are salary deductions, not Chapter VI-A).
 
 ## Tax calc reference (AY 2026-27)
 - **New regime slabs**: 0–4L nil; 4–8L 5%; 8–12L 10%; 12–16L 15%; 16–20L 20%; 20–24L 25%; >24L 30%.
