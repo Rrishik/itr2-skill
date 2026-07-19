@@ -120,7 +120,11 @@ sums to the annual total. Full grid layout (the 5 periods × 6 CG rows and the n
 ## Step 8 — Regime comparison & output
 Compute tax under OLD and NEW and recommend the lower. Produce a data-entry sheet
 (see [references/output-template.md](./references/output-template.md)) and a machine-readable
-`tax_input.json` mirroring the computed values.
+`tax_input.json` mirroring the computed values. Also give the user a **schedule tick-list** for the
+utility's "Select Schedule" step — which schedules to add/remove for their income mix (see
+[references/schedule-mapping.md](./references/schedule-mapping.md#which-schedules-to-select-in-the-utility)).
+Common misses: **FSI + TR** unticked while claiming FTC; **112A** ticked with no 112A income; **ESOP**
+ticked for ordinary RSUs; **80D/VI-A** ticked under the NEW regime.
 
 ## Key gotchas (learned)
 - CSV upload rejects: UTF-8 BOM, header not byte-identical to template (non-breaking spaces),

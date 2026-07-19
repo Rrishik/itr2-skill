@@ -8,6 +8,8 @@ A schedule-by-schedule sheet showing each figure and how it was derived, with ca
 - **Header**: taxpayer, PAN, DOB/age (senior?), form, residential status, regime chosen, bottom line
   (total tax / TDS / refund-or-payable).
 - **Part A — General**: AY, section (139(1)), regime opt-out, foreign-asset flag, ITR-form note.
+- **Schedule selection tick-list**: which schedules to add/remove in the utility's "Select Schedule"
+  step for this income mix (see [schedule-mapping.md](./schedule-mapping.md#which-schedules-to-select-in-the-utility)).
 - **Schedule S** (salary/pension): gross, exemptions, standard deduction, chargeable.
 - **Schedule CG**: STCG 111A, STCG slab, LTCG 112A (gross and taxable-after-1.25L), total CG.
 - **Schedule OS**: dividends, interest — reconciled to AIS.

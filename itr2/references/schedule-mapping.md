@@ -133,3 +133,29 @@ higher form. Decide in this order:
 State the chosen form **and the reason** to the user, and warn when a disqualifier (typically intraday)
 pushes them to a form they didn't anticipate.
 
+## Which schedules to select in the utility
+After picking ITR-2, the utility's **"Select Schedule"** step pre-ticks the mandatory ones and lets you
+add/remove optional ones. Produce a tick-list mapped to the taxpayer's actual income. Rules of thumb:
+
+| Schedule | Select when |
+|---|---|
+| Part A-Gen, Part B-TI, Part B-TTI, Tax-Paid (TP) | always (mandatory) |
+| CYLA, BFLA, CFL, AMTC | always (mandatory, even if nil) |
+| Schedule Salary (S) | any salary/pension (incl. RSU/ESPP perquisite) |
+| Schedule House Property (HP) | only if house-property income/loss — else untick |
+| Schedule Capital Gains (CG) | any capital gain/loss |
+| **Schedule 112A** | **only if listed equity/equity-MF LTCG with STT** — untick if there's none, even when CG is used |
+| Schedule 115AD | non-residents only |
+| Schedule Other Sources (OS) | dividends/interest/other income |
+| Schedule SI | any special-rate income (111A, 112, 112A, DTAA-rate gains) |
+| **Schedule FSI + Schedule TR** | **whenever foreign income + FTC is claimed** — both needed or the FTC won't flow (easy to miss; not auto-ticked) |
+| Schedule FA | Resident & Ordinarily Resident holding any foreign asset in the calendar year |
+| Schedule 80D / VI-A / other 80-x | **OLD regime only**; under NEW only 80CCD(2) employer-NPS survives — untick the rest |
+| **Schedule ESOP** | **only** tax *deferred* on ESOPs from an **eligible start-up (s.80-IAC)** — not ordinary MNC RSUs; untick otherwise |
+| Schedule AL | only if **total income > ₹1 Cr** |
+| Schedule AMT | only if s.115JC AMT applies (certain deductions) |
+| VDA / SPI / PTI / EI / 5A | crypto / clubbed income / pass-through / exempt income / Portuguese-Civil-Code spouse — only if applicable |
+
+Common misses: **FSI + TR** unticked while claiming FTC; **112A** left ticked with no 112A income;
+**ESOP** ticked for ordinary RSUs; **80D/VI-A** ticked under the NEW regime where they don't apply.
+
