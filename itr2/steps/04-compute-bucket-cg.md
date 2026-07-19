@@ -31,7 +31,8 @@ Full rules in [../references/schedule-mapping.md](../references/schedule-mapping
   (`{head, consideration, cost, expenditure?, where, quarter?}`); `schedule_cg.ps1` appends each row.
 - For a Zerodha-style broker tax-P&L, aggregate the heads deterministically with
   [../scripts/schedules/schedule_cg.ps1](../scripts/schedules/schedule_cg.ps1): export the "Tradewise
-  Exits" sheet to CSV, then `schedule_cg.ps1 -Path <csv> -OutDir out` writes per-head
+  Exits" sheet to CSV (this is a **source-derived input** — keep it with the other source documents, not
+  in the pipeline's output folder), then `schedule_cg.ps1 -Path <csv> -OutDir out` writes per-head
   consideration/cost/expenditure (STT excluded) and the 234C quarterly split. Cross-check its totals
   against the broker's own head-wise summary.
 
