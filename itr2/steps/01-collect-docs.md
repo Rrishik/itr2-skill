@@ -26,7 +26,7 @@ senior-citizen status (DOB), regime preference, and whether a **separate** retur
 accounts. A resident holding *any* foreign asset must file **Schedule FA** regardless of sale; omission
 triggers Black Money Act penalties. If the user has none, note it and move on.
 
-## Confirm the source set before extracting
+## Confirm and organize the source set before extracting
 List every file found in the folder, map each to its document type (table above), and present a short
 two-column status — **Identified** (file → type) and **Missing / unidentified** (expected-but-absent
 types, plus any file you couldn't classify). Then ask the user **only** about the Missing / unidentified
@@ -42,6 +42,17 @@ Missing / unidentified:
   - No bank interest certificate (savings/FD interest) — provide or confirm none
   - mystery_report.xlsx — couldn't classify; what is it?
 ```
+
+**Organize into a clean layout** (helps the human review what they provided, and keeps inputs separate
+from regenerable outputs). Propose — and with the user's OK, put files into — two folders in the working
+folder:
+- **`sources/`** — every input: the raw documents **and** anything derived from them (e.g. a broker sheet
+  exported to CSV, or `tax_input.json`). This is the folder the user reviews.
+- **`skill_output/`** — only pipeline outputs (`return.json`, `ITR2_data_entry.md`, `Schedule112A.csv`).
+  Safe to delete and regenerate; never put a source here.
+
+Don't move or rename files without the user's confirmation. Once organized, point `tradewise_csv` (and any
+other path in `tax_input.json`) at the `sources/` copies.
 
 Once the basics are known, write **`work-context.json`** (see SKILL.md → Session state) capturing
 taxpayer/PAN, AY, residential status, senior-citizen flag, regime preference, and foreign-assets yes/no.

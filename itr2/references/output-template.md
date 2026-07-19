@@ -3,7 +3,12 @@
 The deliverables are driven by a single **`tax_input.json`** (one source of truth) and the scripts:
 `compute_tax.ps1` + the per-schedule emitters in `scripts/schedules/` each merge a section into a single
 **`return.json`**, and `build_return.ps1` renders that into the combined `ITR2_data_entry.md`. Mirror any
-existing project convention first. The pieces:
+existing project convention first.
+
+Keep inputs and outputs in separate folders in the working folder: **`sources/`** for every input (raw
+documents and anything derived from them, incl. `tax_input.json` and a broker sheet exported to CSV), and
+**`skill_output/`** for the regenerable outputs (`return.json`, `ITR2_data_entry.md`, `Schedule112A.csv`).
+The pieces:
 
 - **`tax_input.json`** — the machine-readable input (schema below).
 - **`return.json`** — the single structured output. Each emitter writes one section key: `tax_computation`,
