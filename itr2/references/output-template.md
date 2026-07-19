@@ -21,7 +21,25 @@ The pieces:
   This stays a CSV because the portal requires that exact format.
 
 ## 1. Data-entry sheet (Markdown)
-A schedule-by-schedule sheet showing each figure and how it was derived, with caveats. Sections:
+A schedule-by-schedule sheet showing each figure and how it was derived, with caveats.
+`build_return.ps1` renders it from `return.json` with this heading skeleton (schedules are `##`,
+sub-sections under a schedule are `###`); a schedule/sub-section is omitted when it has no data:
+
+```
+# ITR-2 data-entry sheet
+- Taxpayer / PAN / AY / Regime
+## Schedule S — Salary
+## Schedule HP — House Property
+## Schedule CG — Capital Gains
+### Head aggregates
+### 234C quarterly split (by head)
+### Section F — as the utility grid (enter these cells)
+## Schedule OS — Other Sources
+## Schedule VI-A — Deductions
+## Part B-TI / TTI — Tax computation & regime comparison
+```
+
+Sections in detail:
 
 - **Header**: taxpayer, PAN, DOB/age (senior?), form, residential status, regime chosen, bottom line
   (total tax / TDS / refund-or-payable).
@@ -29,9 +47,10 @@ A schedule-by-schedule sheet showing each figure and how it was derived, with ca
 - **Schedule selection tick-list**: which schedules to add/remove in the utility's "Select Schedule"
   step for this income mix (see [schedule-mapping.md](./schedule-mapping.md#which-schedules-to-select-in-the-utility)).
 - **Schedule S** (salary/pension): gross, exemptions, standard deduction, chargeable.
-- **Schedule CG**: STCG 111A, STCG slab, LTCG 112A (gross and taxable-after-1.25L), total CG.
-- **Schedule CG Section F** (234C quarterly grid): the `capital_gains_234c` rows are also rendered as the
-  utility's grid — one row per Section F rate-row, columns Q1–Q5 — so the sheet mirrors the input screen:
+- **Schedule CG** — grouped under one heading, with sub-sections: **Head aggregates** (STCG 111A, STCG
+  slab, LTCG 112A/112, total CG), **234C quarterly split (by head)**, and **Section F — the utility grid**:
+  the `capital_gains_234c` rows pivoted to one row per Section F rate-row, columns Q1–Q5, so the sheet
+  mirrors the input screen:
 
   | Section F row | Q1 (≤15-Jun) | Q2 (16-Jun–15-Sep) | Q3 (16-Sep–15-Dec) | Q4 (16-Dec–15-Mar) | Q5 (16-Mar–31-Mar) | Total |
   |---|---|---|---|---|---|---|

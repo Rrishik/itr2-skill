@@ -105,27 +105,35 @@ $md = New-Object System.Text.StringBuilder
 [void]$md.AppendLine("- Regime: **$($Regime.ToUpper())** (recommended)")
 [void]$md.AppendLine("")
 
+# Each entry: heading level ('##' top-level schedule, '###' sub-section), title, return.json key.
 $sections = @(
-    @('Schedule S — Salary', 'salary'),
-    @('Schedule HP — House Property', 'house_property'),
-    @('Schedule CG — Capital Gains (head aggregates)', 'capital_gains_head'),
-    @('Schedule CG — 234C quarterly split', 'capital_gains_234c'),
-    @('Schedule OS — Other Sources', 'other_sources'),
-    @('Schedule VI-A — Deductions', 'deductions'),
-    @('Part B-TI / TTI — Tax computation & regime comparison', 'tax_computation')
+    @('##', 'Schedule S — Salary', 'salary'),
+    @('##', 'Schedule HP — House Property', 'house_property'),
+    @('##', 'Schedule CG — Capital Gains', $null),
+    @('###', 'Head aggregates', 'capital_gains_head'),
+    @('###', '234C quarterly split (by head)', 'capital_gains_234c'),
+    @('##', 'Schedule OS — Other Sources', 'other_sources'),
+    @('##', 'Schedule VI-A — Deductions', 'deductions'),
+    @('##', 'Part B-TI / TTI — Tax computation & regime comparison', 'tax_computation')
 )
 foreach ($s in $sections) {
-    if (-not ($doc.PSObject.Properties.Name -contains $s[1])) { continue }
-    $tbl = Rows-ToMdTable $doc.($s[1])
+    $level = $s[0]; $title = $s[1]; $key = $s[2]
+    # A heading-only group row (no key) — emit only if a child section has data.
+    if (-not $key) {
+        if ($title -like 'Schedule CG*' -and -not ($doc.PSObject.Properties.Name -contains 'capital_gains_head' -or $doc.PSObject.Properties.Name -contains 'capital_gains_234c')) { continue }
+        [void]$md.AppendLine("$level $title"); [void]$md.AppendLine(""); continue
+    }
+    if (-not ($doc.PSObject.Properties.Name -contains $key)) { continue }
+    $tbl = Rows-ToMdTable $doc.$key
     if ($null -eq $tbl) { continue }
-    [void]$md.AppendLine("## $($s[0])")
+    [void]$md.AppendLine("$level $title")
     [void]$md.AppendLine("")
     [void]$md.AppendLine($tbl)
     # For the 234C split, also emit the utility's Section F grid (rows x quarters).
-    if ($s[1] -eq 'capital_gains_234c') {
-        $grid = SectionF-Grid $doc.($s[1])
+    if ($key -eq 'capital_gains_234c') {
+        $grid = SectionF-Grid $doc.$key
         if ($grid) {
-            [void]$md.AppendLine("### Schedule CG Section F — as the utility grid (enter these cells)")
+            [void]$md.AppendLine("### Section F — as the utility grid (enter these cells)")
             [void]$md.AppendLine("")
             [void]$md.AppendLine($grid)
             [void]$md.AppendLine("_Each row must sum to that head's annual gain; the utility rejects negatives (net a loss-quarter into a later positive one)._")

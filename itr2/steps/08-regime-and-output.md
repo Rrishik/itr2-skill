@@ -33,7 +33,10 @@ Then run the pipeline:
   uploadable **`Schedule112A.csv`** (the portal needs that exact CSV). Each self-skips when its input is absent.
 - [../scripts/build_return.ps1](../scripts/build_return.ps1) `-InputJson tax_input.json -OutDir out
   [-TradewiseCsv ...]` orchestrates all of the above (auto-picking the recommended regime), records filing
-  meta, and renders **`return.json`** into one **`ITR2_data_entry.md`**.
+  meta, and renders **`return.json`** into one **`ITR2_data_entry.md`**. It follows a fixed heading
+  skeleton (schedules `##`, sub-sections `###`; Schedule CG groups head aggregates, the 234C split, and
+  the Section F utility grid) — see the template in
+  [../references/output-template.md](../references/output-template.md#1-data-entry-sheet-markdown).
 
 Also give the user a **schedule tick-list** for the utility's "Select Schedule" step — see
 [schedule-selection.md](./schedule-selection.md).
