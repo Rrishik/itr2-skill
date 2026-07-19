@@ -11,6 +11,12 @@
 
 - Enter **aggregate sale and cost**, not net gain. Utility computes balance = sale − (cost + expenditure).
 - **Specified debt MF** (bought on/after 1-Apr-2023): always slab rate regardless of holding → item 5.
+- **Expenditure field (biii)** = only **sell-side** transfer charges (brokerage, exchange txn, SEBI,
+  IGST/GST, stamp duty, IPFT on the *sell* leg). **Buy-side** charges instead add to **cost of
+  acquisition (bi)**. **STT is never entered** anywhere. These charges are usually a few rupees — enter
+  them for exactness but they rarely move the tax. The broker tax-P&L lists each charge per trade.
+- **One block per head:** Section A5 (and each LTCG item) has a single consideration/cost block, so
+  **sum all sources in that head** into one entry (e.g. debt-MF + foreign-share STCG both go into A5).
 
 ## Long-Term Capital Gains (Schedule CG → Section B)
 | Item | Use for |

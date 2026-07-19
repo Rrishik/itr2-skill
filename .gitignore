@@ -2,10 +2,10 @@
 *.pdf
 *.csv
 tax_input*.json
-ITR2_data_entry_sheet*.md
+ITR2_data_entry*.md
 docs/
 docs_*/
-*_data_entry_sheet*.md
+*_data_entry*.md
 
 # Allow the CSV template if you intentionally add a blank one
 !template.csv

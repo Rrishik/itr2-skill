@@ -12,7 +12,8 @@ AIS/TIS reconciliation, the 234C quarterly grid, OLD vs NEW regime, and ITR-1/2/
 
 ## Install
 
-The skill lives in `itr2/`. Clone, then drop it into your agent's skills directory:
+The repo ships two skills: **`itr`** (a thin umbrella that routes to the right ITR form) and **`itr2`**
+(the capital-gains form skill that does the work). Clone, then drop them into your agent's skills directory:
 
 | Agent | Skills directory |
 |---|---|
@@ -23,9 +24,8 @@ The skill lives in `itr2/`. Clone, then drop it into your agent's skills directo
 Easiest — from the cloned repo, run the helper (or just open the repo and tell your agent
 **"install this skill"**, per [AGENTS.md](./AGENTS.md)):
 
-```bash
-./install.sh claude        # copilot (default) | claude | copilot-cli
-.\install.ps1 claude       # same, on Windows
+```powershell
+.\install.ps1 claude       # copilot (default) | claude | copilot-cli
 ```
 
 Reload your agent afterward. The bundled scripts need **PowerShell** (and `pdftotext` for AIS PDFs);

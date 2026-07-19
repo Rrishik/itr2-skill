@@ -6,8 +6,8 @@ argument-hint: 'Point to the folder containing the tax documents'
 
 # ITR-2 Capital Gains & Income Computation
 
-Compute capital gains (STCG/LTCG), other-source income, and produce the Schedule 112A
-CSV for India's ITR-2, then tell the user exactly where each value goes in the offline utility.
+Compute capital gains (STCG/LTCG), other-source income, and produce the Schedule 112A CSV for India's
+ITR-2, then tell the user exactly where each value goes in the offline utility.
 
 ## When to Use
 - Filing an Indian ITR-2 with capital gains from listed shares and/or mutual funds.
@@ -15,131 +15,93 @@ CSV for India's ITR-2, then tell the user exactly where each value goes in the o
 - Reconciling broker statements against AIS/TIS.
 - Deciding OLD vs NEW regime.
 
-## Step 1 — Collect documents
-Ask the user to provide (whatever applies). Note which are missing and proceed with what's available:
+## How this skill is organised
+Each step below is a short instruction here plus a detailed file under [steps/](./steps/). **Load a
+step's file only when you reach it** (progressive disclosure) — and skip steps that don't apply to this
+taxpayer (e.g. no 112A LTCG → skip Step 5; no foreign assets → skip Step 9). Shared lookup tables live in
+[references/](./references/); deterministic computation lives in [scripts/](./scripts/).
 
-| Document | Provides |
+## Entry routing
+Users often arrive mid-flow. Match the request and jump straight to that step (still capture the shared
+work context first — see below); walk the full 1→8 spine only for an open-ended "help me file".
+
+| User intent | Go to |
 |---|---|
-| Stocks capital-gains report (broker) | STCG/LTCG on shares, charges (brokerage/STT/etc.) |
-| Mutual-fund capital-gains report (broker) | Equity & debt MF STCG/LTCG, grandfathered NAV |
-| Stocks P&L / trade report | Intraday (speculative) vs delivery split, unrealised holdings |
-| Form 16 / Form 12BA | Salary, perquisites, TDS, exemptions |
-| AIS (PDF, password-protected) | Dept-reported dividend/interest/sale figures — the reconciliation baseline |
-| TIS | Summarised income the dept expects |
-| Dividend report | Dividend income (Schedule OS) |
-| Bank interest certificate / passbook | Savings + FD interest (Schedule OS) |
-| Pension certificate | Pension (taxed under Salaries) |
-| Foreign broker statement (ESPP/RSU/foreign stocks) | Foreign capital gains, holdings for Schedule FA |
-| Foreign broker **open/closed lots** report (cost-basis / gain-loss detail) | Exact **acquisition (vest) date** and per-lot cost basis — needed for the 24-month holding test |
-| ESPP/RSU vesting or purchase report | Perquisite value (salary) + cost basis for later sale |
-| Foreign dividend statement / 1042-S | Foreign dividends (Schedule OS) + tax withheld (FTC) |
-| Form 67 / foreign tax-paid proof | Foreign Tax Credit under DTAA |
+| "Which ITR form do I file?", intraday/F&O question | Step 2 |
+| "Read/open this broker file", password-protected PDF | Step 3 |
+| "Compute/classify my capital gains", STCG/LTCG buckets | Step 4 |
+| "Build my 112A CSV", upload rejected | Step 5 |
+| "Reconcile against AIS/TIS" | Step 6 |
+| "Quarterly / 234C breakup" | Step 7 |
+| "Compare OLD vs NEW regime", "compute my tax", final sheet | Step 8 |
+| Foreign stocks / ESPP / RSU / foreign dividend / Schedule FA / FTC | Step 9 |
+| "Which schedules do I tick?" | [steps/schedule-selection.md](./steps/schedule-selection.md) |
 
-Clarify: residential status (Schedule FA + global income apply only to **Resident & Ordinarily Resident**),
-senior-citizen status (DOB), regime preference, and whether a **separate** return (different PAN) is intended.
+## Steps
+1. **Collect documents** — gather broker/AIS/salary/foreign docs; clarify residency, age, regime.
+   Load [steps/01-collect-docs.md](./steps/01-collect-docs.md). Always ask about foreign holdings.
+2. **Select the ITR form** — confirm ITR-2 fits (intraday/F&O → ITR-3, out of scope).
+   Load [steps/02-select-itr-form.md](./steps/02-select-itr-form.md).
+3. **Read the documents** — xlsx magic bytes, `read_xlsx.ps1`, PDF passwords.
+   Load [steps/03-read-documents.md](./steps/03-read-documents.md).
+4. **Compute & bucket the gains** — classify each gain into 111A / slab / 112A / 112; run `schedule_cg.ps1`.
+   Load [steps/04-compute-bucket-cg.md](./steps/04-compute-bucket-cg.md).
+5. **Build the Schedule 112A CSV** — only if there is listed-equity LTCG. `schedule_112a.ps1`.
+   Load [steps/05-schedule-112a.md](./steps/05-schedule-112a.md).
+6. **Reconcile against AIS** — report the AIS figure for rounding-size differences.
+   Load [steps/06-reconcile-ais.md](./steps/06-reconcile-ais.md).
+7. **Quarterly breakup (234C)** — split each head by sale-quarter; net losses forward.
+   Load [steps/07-quarterly-234c.md](./steps/07-quarterly-234c.md).
+8. **Regime comparison & output** — fill `tax_input.json`; run `build_return.ps1`; produce the tick-list.
+   Load [steps/08-regime-and-output.md](./steps/08-regime-and-output.md).
 
-**Always ask about foreign holdings** — foreign stocks, ESPP/RSU (even unsold), foreign bank/broker
-accounts. A resident holding *any* foreign asset must file **Schedule FA** regardless of sale; omission
-triggers Black Money Act penalties. If the user has none, note it and move on.
+Conditional:
+- **Foreign assets** (stocks / ESPP / RSU / foreign dividends / Schedule FA / FTC): if any, load
+  [steps/09-foreign-assets.md](./steps/09-foreign-assets.md).
+- **Schedule tick-list** for the utility's "Select Schedule" step:
+  [steps/schedule-selection.md](./steps/schedule-selection.md).
 
-## Step 2 — Decide which ITR form
-Before computing anything, confirm the right form for the taxpayer's income mix (see
-[references/schedule-mapping.md](./references/schedule-mapping.md#itr-form-selection) for the full table):
+## Pipeline at a glance
+`tax_input.json` is the single source of truth. [scripts/build_return.ps1](./scripts/build_return.ps1)
+runs `compute_tax.ps1` + every `schedules/schedule_*.ps1` (each self-skips when its input is absent) and
+stitches the section CSVs into one `ITR2_data_entry.md`. See
+[references/output-template.md](./references/output-template.md) for deliverable shapes.
 
-| Form | Fits when | Blocks / notes |
-|---|---|---|
-| **ITR-1 (Sahaj)** | Resident, income ≤₹50L, only salary/one house/other sources, **LTCG 112A ≤₹1.25L** | No STCG, no foreign assets, not a company director |
-| **ITR-2** | Salary/pension + capital gains + other sources + foreign assets; no business income | **This skill's default.** Any capital gain beyond the ITR-1 112A cap → ITR-2 |
-| **ITR-3** | Any of the above **plus** business/professional income — incl. **intraday** (speculative) or **F&O** | Required if intraday/F&O exists; not covered by this skill |
-| **ITR-4 (Sugam)** | Presumptive business (44AD/ADA/AE), resident, income ≤₹50L | No capital gains (except LTCG 112A ≤₹1.25L), no foreign assets |
+## Session state (survive long sessions / compaction)
+Keep two files in the working folder as the durable context, so a jump to any step or a resumed session
+stays consistent:
+- **`tax_input.json`** — the numeric inputs (schema in output-template.md).
+- **`work-context.json`** — the filing decisions: taxpayer/PAN, AY, **residential status**, senior-citizen
+  flag, **chosen ITR form + why**, **chosen regime + why**, foreign-assets yes/no, which schedules apply,
+  AIS-reconciliation status, any logged FX rates, and the current step. Write it early (Step 1–2) and
+  update it as decisions are made; re-read it before resuming or jumping mid-flow.
 
-Decision order: **intraday/F&O/business → ITR-3** (stop, out of scope). Else **capital gains present or
-foreign assets held → ITR-2**. Else only salary + minor 112A → ITR-1 may suffice. State the chosen form
-and *why* to the user, and flag if a disqualifier (e.g. intraday) forces a form they didn't expect.
+## Extending to other ITR forms
+This skill is ITR-2-specific but built to generalise. When adding a sibling (e.g. `itr3` for
+business/F&O income), reuse rather than fork:
+- **Reusable as-is:** `scripts/read_xlsx.ps1`, `scripts/compute_tax.ps1` (slabs/surcharge/regime are
+  form-independent), `scripts/schedules/schedule_{s,hp,os,via,cg,112a}.ps1`, `build_return.ps1`, the
+  `references/` lookup tables, and steps 1, 3, 6, 7, 8, 9 + `schedule-selection.md` (largely form-agnostic).
+- **Form-specific:** the `description`/`name` frontmatter, Step 2 (form selection), and any new schedules
+  (e.g. Schedule BP for business income). Add those as new `steps/` files and new `schedules/*.ps1`.
+- Keep the same contract: one orchestrator SKILL.md → on-demand `steps/*.md` → shared `scripts/` + a
+  single `tax_input.json` + `work-context.json`. Promote genuinely shared assets to a common location
+  only when a second form actually needs them (avoid speculative abstraction).
 
-## Step 3 — Read the documents
-- Broker reports are often `.xlsx` **with the extension stripped** — check magic bytes (`50 4B` = xlsx/zip).
-- Read xlsx without Excel/Python using [read_xlsx.ps1](./scripts/read_xlsx.ps1) (extracts sharedStrings + sheet rows).
-- **Password-protected PDFs** — each source uses its own scheme, so try them per-source:
-  AIS/TIS/26AS = PAN-lowercase + DOB `DDMMYYYY` (e.g. `abcde1234f01011980`); Form 16 is often
-  PAN-uppercase only; CAS/CAMS/broker statements may use a user-set password. Extract with
-  `pdftotext -layout -upw "<pwd>" in.pdf out.txt`.
+## Security & confirmation boundaries
 
-## Step 4 — Compute and bucket the gains
-See [references/schedule-mapping.md](./references/schedule-mapping.md) for the full rules. Summary:
+### CAN (do freely)
+- Read the user's tax documents, compute figures, run the scripts, and produce the data-entry sheet and CSVs.
+- Recommend a regime/form and explain the reasoning.
 
-| Bucket | Section | Rate | Where in utility |
-|---|---|---|---|
-| Listed equity/equity-MF STCG (STT paid) | 111A | 20%* | Schedule CG → STCG item 2 |
-| Other STCG (debt MF, unlisted, etc.) | slab | slab | Schedule CG → STCG item 5 |
-| Listed equity/equity-MF LTCG (STT paid) | 112A | 12.5%* (first ₹1.25L exempt) | Schedule CG → LTCG item 3 |
-| Listed bonds / SGB / ZCB LTCG (non-STT) | 112 | 12.5% no indexation, **no ₹1.25L exempt** | Schedule CG → LTCG item 2 |
-| Dividends, interest | — | slab | Schedule OS |
+### CANNOT (never do)
+- **File, submit, or e-verify** the return, or log into the income-tax portal on the user's behalf.
+- Invent missing figures, rates, or FX values — if a source is missing, say so and stop at that line.
+- Treat computed numbers as final without AIS/TIS reconciliation (Step 6).
+- Give definitive legal/tax advice — present computations and cite the rule; the filing decision is the user's.
 
-*Post-23-Jul-2024 rates. Sales before that date use old rates — split if any exist.
-
-- **Foreign stocks / ESPP / RSU** on sale = capital gains but **NOT** 111A/112A (no STT): >24 months
-  held → LTCG at 12.5% (**no ₹1.25L exemption** — that shield is 112A-only; foreign LTCG is **s.112**);
-  ≤24 months → STCG at slab. Holding period runs from the **vest date, not the grant date**; confirm it
-  and the per-lot cost from the broker's **closed-lots report** — the US LONG/SHORT tag ≠ India's
-  24-month test. The ESPP/RSU vesting value is a **salary perquisite**; if the employer is foreign it's
-  usually missing from Form 16 and must be added to salary manually.
-- **Currency conversion (Rule 115/128):** SBI TT buying rate on the relevant date (transaction date for a
-  sale/purchase; last day of the *preceding* month for income/foreign-tax); holiday → prior working day.
-  Use the **RBI reference-rate archive** as the citable proxy and log every rate.
-- **Foreign dividends** → Schedule OS at slab (gross); foreign tax withheld → **FTC via Form 67** (file
-  *before* the return). For **US dividends the India–US DTAA rate is 25% for individuals** (15% is
-  company-≥10%-voting-stock only) and fully creditable. A resident's global income is taxable.
-- **Schedule FA** — list every foreign asset held any time in the calendar year (not FY): shares, ESPP/RSU
-  (including unvested per the relevant table), and foreign accounts. Mandatory for Resident & Ordinarily Resident.
-- Full foreign rules (holding test, Rule 115/128, DTAA rates, 1042-S CY-vs-FY timing) in
-  [references/schedule-mapping.md](./references/schedule-mapping.md#foreign-stocks--espp--rsu--foreign-dividends).
-- **Intraday** equity = **speculative business income** → strictly ITR-3, not ITR-2. Flag it explicitly.
-- **Charges** (brokerage, exchange, SEBI, stamp duty, GST, IPFT) are deductible u/s 48 as
-  "expenditure in connection with transfer". **STT is NOT deductible.**
-- Enter **aggregate sale value and cost** in each grid, not the net gain — the utility computes balance.
-
-## Step 5 — Build the Schedule 112A CSV
-Use the user's downloaded template header **verbatim** and follow the official column codes.
-See [references/112a-csv.md](./references/112a-csv.md) for the exact rules and the common
-upload-failure causes (BOM, non-breaking spaces, `AE`/`BE` codes, forbidden characters).
-Build with [build_112a_csv.ps1](./scripts/build_112a_csv.ps1).
-
-## Step 6 — Reconcile against AIS
-Always compare computed dividend/interest/sale totals to AIS. Small (≈₹ tens) differences are
-rounding — **report the AIS figure** to avoid mismatch notices. Large differences need investigation
-(FY-basis vs ex-date vs payment-date; missing transactions).
-
-## Step 7 — Quarterly breakup (Section F / OS 234C grid)
-Gains and dividends must be split by the quarter the **sale/credit** occurred, for 234C interest.
-FY quarters: ≤15-Jun, 16-Jun–15-Sep, 16-Sep–15-Dec, 16-Dec–15-Mar, 16-Mar–31-Mar.
-The utility rejects negatives — net a loss-quarter into a later positive quarter so each row still
-sums to the annual total. Full grid layout (the 5 periods × 6 CG rows and the netting rule) is in
-[references/schedule-mapping.md](./references/schedule-mapping.md#quarterly-breakup--schedule-cg-section-f-and-os-234c-grid).
-
-## Step 8 — Regime comparison & output
-Compute tax under OLD and NEW and recommend the lower. Produce a data-entry sheet
-(see [references/output-template.md](./references/output-template.md)) and a machine-readable
-`tax_input.json` mirroring the computed values. Also give the user a **schedule tick-list** for the
-utility's "Select Schedule" step — which schedules to add/remove for their income mix (see
-[references/schedule-mapping.md](./references/schedule-mapping.md#which-schedules-to-select-in-the-utility)).
-Common misses: **FSI + TR** unticked while claiming FTC; **112A** ticked with no 112A income; **ESOP**
-ticked for ordinary RSUs; **80D/VI-A** ticked under the NEW regime.
-
-## Key gotchas (learned)
-- CSV upload rejects: UTF-8 BOM, header not byte-identical to template (non-breaking spaces),
-  wrong 1a code (`AE` after 31-Jan-2018 / `BE` before), and any of `, / - _ ( ) & @ \ ' " ; :`
-  inside data — so a consolidated `AE` row (ISIN `INNOTREQUIRD`, name `CONSOLIDATED`) avoids the
-  minus signs from loss-making lots.
-- 80TTA (non-senior) vs 80TTB (senior, ₹50k) for interest.
-- Grandfathering (31-Jan-2018 NAV) applies only to `BE` lots.
-- **Listed bonds / SGB / ZCB are s.112, not 112A** — 12.5% with no indexation and no ₹1.25L exemption
-  (LTCG item 2). AIS often **mislabels** them as "listed debenture/securities"; classify by instrument.
-- **The employer's regime choice doesn't bind the return** — Form 16 may deduct TDS under old regime
-  (opted out of 115BAC), but always recompute both regimes fresh and pick the lower for the filing.
-- **Foreign LTCG (s.112) gets no ₹1.25L exemption** — that shield is 112A (listed Indian equity) only.
-- **US dividend DTAA rate is 25% for individuals** (15% is company-≥10%-voting-stock only), fully creditable.
-- Broker legacy `.xls` files may be **OLE (magic `D0 CF 11 E0`)**, not ZIP `.xlsx` — read_xlsx.ps1 only
-  handles ZIP-based xlsx; use another reader (e.g. Excel COM) for OLE.
-- **Foreign dividend timing:** 1042-S is by US *calendar year*, but India taxes by *FY receipt date* —
-  Jan–Mar dividends belong to the Indian FY even before that year's 1042-S is issued.
+### MUST CONFIRM (pause and ask)
+- Any figure that is **estimated** (e.g. an FX rate proxy, a back-derived cost basis) — flag it clearly.
+- Choosing a form that a disqualifier forces unexpectedly (e.g. intraday → ITR-3, out of scope here).
+- Overriding the script-recommended regime, or entering net gain instead of aggregate consideration/cost.
+- Any action that writes outside the working folder.

@@ -1,6 +1,15 @@
 # Output templates
 
-Produce two artifacts for the user (mirror any existing project convention first).
+The deliverables are driven by a single **`tax_input.json`** (one source of truth) and the scripts:
+`compute_tax.ps1` + the per-schedule emitters in `scripts/schedules/` each write a section CSV, and
+`build_return.ps1` stitches them into the combined `ITR2_data_entry.md`. Mirror any existing project
+convention first. The pieces:
+
+- **`tax_input.json`** — the machine-readable input (schema below).
+- **Section CSVs** — one per schedule (`schedule_s.csv`, `schedule_hp.csv`, `schedule_os.csv`,
+  `schedule_via.csv`, `cg_head_aggregates.csv`, `cg_234c_split.csv`, `tax_regime_comparison.csv`).
+- **`ITR2_data_entry.md`** — the combined data-entry sheet (built from the CSVs).
+- **`Schedule112A.csv`** — the uploadable 112A file, when there's 112A LTCG (`schedules/schedule_112a.ps1`).
 
 ## 1. Data-entry sheet (Markdown)
 A schedule-by-schedule sheet showing each figure and how it was derived, with caveats. Sections:
@@ -20,23 +29,43 @@ A schedule-by-schedule sheet showing each figure and how it was derived, with ca
 
 Mark any USD/forex or estimated items clearly (e.g. `§`) so they can be refreshed.
 
+**Format for each CG sub-head:** show the source detail table, then a plain **field → value** table of
+the exact utility inputs under that section header — nothing more. Do **not** add "where exactly in the
+utility" prose or item codes. Enter aggregate consideration/cost (never the net gain); the utility
+computes the balance. Example:
+
+```
+### STCG at slab — assets other than A1–A4
+| Source | Sale date | Consideration ₹ | Cost ₹ | Gain ₹ |
+| ...detail rows... |
+
+| Field | Value |
+|---|---|
+| Full value of consideration | 9,85,928 |
+| Cost of acquisition | 7,61,576 |
+| Cost of improvement | 0 |
+| Expenditure w&e in connection with transfer | 0 |
+```
+
 ## 2. Machine-readable input (JSON)
-A compact `tax_input.json` with the computed values, e.g.:
+`tax_input.json` is the single input consumed by `compute_tax.ps1`, the per-schedule emitters, and
+`build_return.ps1`. All amounts in INR; omit what doesn't apply:
 ```json
 {
-  "taxpayer": "", "pan": "", "dob": "", "senior_citizen": false,
-  "ay": "2026-27", "regime": "new",
-  "salary_or_pension_gross": 0,
-  "other_sources": { "dividend": 0, "bank_interest": 0 },
-  "capital_gains": {
-    "stcg_equity_111a": 0, "stcg_slab": 0,
-    "ltcg_equity_112a": 0, "ltcg_112a_pre_rate_change": 0
-  },
-  "deductions": {},
-  "taxes_paid": { "tds": 0, "advance_tax": 0, "self_assessment_tax": 0 },
-  "notes": {}
+  "taxpayer": "", "pan": "", "ay": "2026-27", "senior_citizen": false,
+  "salary_gross": 0,
+  "other_sources": { "dividend": 0, "savings_interest": 0, "fd_interest": 0 },
+  "house_property": 0,
+  "special_rate_gains": { "stcg_111a": 0, "ltcg_112a": 0, "ltcg_112": 0 },
+  "deduction_80ccd2": 0,
+  "deductions_old": { "80c": 0, "80d": 0, "80tta_ttb": 0, "other": 0 },
+  "taxes_paid": { "tds": 0, "advance_tax": 0, "self_assessment_tax": 0, "ftc": 0 }
 }
 ```
+- `special_rate_gains` come from `schedules/schedule_cg.ps1` (STT already excluded): 111a=listed-equity STCG,
+  112a=listed-equity LTCG (gross, before the ₹1.25L exemption the script applies), 112=bonds/SGB/foreign LTCG.
+- `deduction_80ccd2` (employer NPS) is allowed under **both** regimes; everything in `deductions_old`
+  is OLD-regime only.
 
 ## Tax calc reference (AY 2026-27)
 - **New regime slabs**: 0–4L nil; 4–8L 5%; 8–12L 10%; 12–16L 15%; 16–20L 20%; 20–24L 25%; >24L 30%.
