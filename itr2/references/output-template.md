@@ -102,7 +102,9 @@ computes the balance. Example:
   "taxpayer": "", "pan": "", "ay": "2026-27", "senior_citizen": false,
   "salary_gross": 0,
   "salary_hra_exemption": 0, "salary_professional_tax": 0,
-  "other_sources": { "dividend": 0, "savings_interest": 0, "fd_interest": 0 },
+  "other_sources": { "dividend": 0, "savings_interest": 0, "fd_interest": 0,
+    "dividend_quarterly": { "q1": 0, "q2": 0, "q3": 0, "q4": 0, "q5": 0 },
+    "interest_quarterly": { "q1": 0, "q2": 0, "q3": 0, "q4": 0, "q5": 0 } },
   "house_property": 0,
   "slab_rate_gains": 0,
   "special_rate_gains": { "stcg_111a": 0, "ltcg_112a": 0, "ltcg_112": 0 },
@@ -123,6 +125,11 @@ computes the balance. Example:
   is OLD-regime only.
 - `salary_hra_exemption` (s.10(13A)) and `salary_professional_tax` (s.16(iii)) reduce **salary** under the
   **OLD regime only** — put them here, NOT in `deductions_old` (they are salary deductions, not Chapter VI-A).
+- `other_sources.dividend_quarterly` / `interest_quarterly` (optional) — the 234C credit-date split of
+  dividend and interest income, keyed `q1..q5` (the five FY periods). Populate them at extraction time from
+  the dividend report / AIS / bank certificate credit dates; each must sum to the matching annual figure
+  (`dividend`, and `savings_interest + fd_interest + interest`). Omit if credit dates aren't available —
+  the OS 234C grid is then skipped. See [../steps/07-quarterly-234c.md](../steps/07-quarterly-234c.md).
 
 ## Tax calc reference (AY 2026-27)
 - **New regime slabs**: 0–4L nil; 4–8L 5%; 8–12L 10%; 12–16L 15%; 16–20L 20%; 20–24L 25%; >24L 30%.

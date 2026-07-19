@@ -10,8 +10,8 @@ Ask the user to provide (whatever applies). Note which are missing and proceed w
 | Form 16 / Form 12BA | Salary, perquisites, TDS, exemptions |
 | AIS (PDF, password-protected) | Dept-reported dividend/interest/sale figures — the reconciliation baseline |
 | TIS | Summarised income the dept expects |
-| Dividend report | Dividend income (Schedule OS) |
-| Bank interest certificate / passbook | Savings + FD interest (Schedule OS) |
+| Dividend report | Dividend income (Schedule OS) — capture **credit dates** for the 234C quarterly split |
+| Bank interest certificate / passbook | Savings + FD interest (Schedule OS) — capture **credit dates** for the 234C split |
 | Pension certificate | Pension (taxed under Salaries) |
 | Foreign broker statement (ESPP/RSU/foreign stocks) | Foreign capital gains, holdings for Schedule FA |
 | Foreign broker **open/closed lots** report (cost-basis / gain-loss detail) | Exact **acquisition (vest) date** and per-lot cost basis — needed for the 24-month holding test |
