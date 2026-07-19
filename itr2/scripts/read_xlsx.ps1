@@ -1,4 +1,4 @@
-# Reads an .xlsx file (even with the extension stripped) and prints every sheet's
+﻿# Reads an .xlsx file (even with the extension stripped) and prints every sheet's
 # rows as "A1=val | B1=val | ...", resolving shared strings. No Excel/Python needed.
 #
 # Usage:  powershell -NoProfile -ExecutionPolicy Bypass -File read_xlsx.ps1 -Path "<file>"

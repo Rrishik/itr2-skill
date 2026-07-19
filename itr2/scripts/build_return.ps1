@@ -1,4 +1,4 @@
-# Orchestrator: runs every per-schedule emitter against a shared tax_input.json,
+﻿# Orchestrator: runs every per-schedule emitter against a shared tax_input.json,
 # then stitches all the section CSVs into one Markdown data-entry sheet.
 #
 # It runs (when the relevant input is present):

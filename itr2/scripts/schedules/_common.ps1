@@ -1,4 +1,4 @@
-# Shared helpers for the per-schedule emitters. Dot-source this.
+﻿# Shared helpers for the per-schedule emitters. Dot-source this.
 #   . "$PSScriptRoot\_common.ps1"
 # Each schedule_*.ps1 reads the shared tax_input.json (single source of truth)
 # and writes schedule_<x>.csv as Field,Value rows into -OutDir.

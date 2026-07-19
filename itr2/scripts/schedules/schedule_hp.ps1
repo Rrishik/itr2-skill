@@ -1,4 +1,4 @@
-# Schedule HP (House Property) emitter. Reads tax_input.json, writes schedule_hp.csv.
+﻿# Schedule HP (House Property) emitter. Reads tax_input.json, writes schedule_hp.csv.
 # Net annual value less 30% standard deduction less home-loan interest. The set-off
 # of house-property loss against other heads is capped at -2,00,000 (applied in
 # compute_tax.ps1, not here). Usage:

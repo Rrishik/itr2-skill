@@ -1,4 +1,4 @@
-# Deterministic ITR-2 tax computation and OLD-vs-NEW regime comparison.
+﻿# Deterministic ITR-2 tax computation and OLD-vs-NEW regime comparison.
 #
 # Reads a tax_input.json (schema below), computes tax under both regimes, and
 # prints a line-by-line comparison. With -OutDir it also writes

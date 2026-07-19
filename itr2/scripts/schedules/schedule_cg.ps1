@@ -1,4 +1,4 @@
-# Deterministic capital-gains aggregator for a Zerodha-style "Tradewise Exits" CSV.
+﻿# Deterministic capital-gains aggregator for a Zerodha-style "Tradewise Exits" CSV.
 #
 # Reads the broker's tax-P&L tradewise sheet (exported to CSV) and, for each
 # section (Equity - Short Term / Long Term / Intraday / Buyback / Non-equity /

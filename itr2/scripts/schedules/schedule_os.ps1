@@ -1,4 +1,4 @@
-# Schedule OS (Other Sources) emitter. Reads tax_input.json, writes schedule_os.csv.
+﻿# Schedule OS (Other Sources) emitter. Reads tax_input.json, writes schedule_os.csv.
 # Sums dividends and interest (savings + FD) at slab rate. Reconcile the totals to
 # AIS before finalising; report the AIS figure for tiny (rounding) differences.
 # The 234C quarterly split of dividends lives in the OS grid (by credit date) —

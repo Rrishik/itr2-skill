@@ -1,4 +1,4 @@
-# Schedule VI-A (Deductions) emitter. Reads tax_input.json, writes schedule_via.csv.
+﻿# Schedule VI-A (Deductions) emitter. Reads tax_input.json, writes schedule_via.csv.
 # Under the NEW regime only 80CCD(2) (employer NPS) survives; everything else is
 # OLD-regime only. This emitter therefore reports the allowed set per regime and
 # flags any OLD-only deduction that is void under NEW. Usage:

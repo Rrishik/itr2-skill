@@ -1,4 +1,4 @@
-# Schedule S (Salary) emitter. Reads tax_input.json, writes schedule_s.csv.
+﻿# Schedule S (Salary) emitter. Reads tax_input.json, writes schedule_s.csv.
 # Gross salary less standard deduction (regime-dependent) = chargeable salary.
 # Add any foreign-employer RSU/ESPP perquisite into salary_gross first (often
 # missing from Form 16). Usage:

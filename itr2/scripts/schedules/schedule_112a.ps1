@@ -1,4 +1,4 @@
-# Schedule 112A emitter. Reads tax_input.json and builds the uploadable
+﻿# Schedule 112A emitter. Reads tax_input.json and builds the uploadable
 # Schedule 112A CSV using the user's downloaded template header VERBATIM
 # (preserves non-breaking spaces), no BOM, CRLF line endings.
 #
