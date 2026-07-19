@@ -182,6 +182,18 @@ if ($OutDir) {
             Consideration = [math]::Round($a.Cons, 2); Cost = [math]::Round($a.Cost, 2)
             Expenditure = [math]::Round($a.Charges, 2); Gain = [math]::Round($a.Gain, 2)
             STT_Excluded = [math]::Round($a.STT, 2)
+            Where = $(switch ($k) {
+                'Equity - Short Term' { 'Schedule CG A2 (STCG 111A, STT paid)' }
+                'Equity - Long Term'  { 'Schedule CG B3 (LTCG 112A, opens 112A grid)' }
+                'Equity - Buyback'    { 'Schedule CG A8 (buyback)' }
+                'Mutual Funds'        { 'Schedule CG A5 or B (by fund type/holding); debt MF = A5 slab' }
+                'Non-equity'          { 'Schedule CG B2 (listed bonds/SGB/ZCB u/s 112(1)); debt MF STCG = A5' }
+                'F&O'                 { 'NOT CG - business income, ITR-3 (out of scope)' }
+                'Currency'            { 'NOT CG - business income, ITR-3 (out of scope)' }
+                'Commodity'           { 'NOT CG - business income, ITR-3 (out of scope)' }
+                'Equity - Intraday'   { 'NOT CG - speculative business income, ITR-3 (out of scope)' }
+                default               { 'Schedule CG - classify by instrument' }
+            })
         }
     }
     $headPath = Join-Path $OutDir 'cg_head_aggregates.csv'

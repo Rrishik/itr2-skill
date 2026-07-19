@@ -8,6 +8,9 @@ convention first. The pieces:
 - **`tax_input.json`** — the machine-readable input (schema below).
 - **Section CSVs** — one per schedule (`schedule_s.csv`, `schedule_hp.csv`, `schedule_os.csv`,
   `schedule_via.csv`, `cg_head_aggregates.csv`, `cg_234c_split.csv`, `tax_regime_comparison.csv`).
+  Each row carries a **`Where`** column naming the exact utility field the value goes into (e.g.
+  `Schedule S: 4(a) standard deduction u/s 16(ia)`, `Schedule CG A2 (STCG 111A)`), so the user knows
+  precisely which box to populate.
 - **`ITR2_data_entry.md`** — the combined data-entry sheet (built from the CSVs).
 - **`Schedule112A.csv`** — the uploadable 112A file, when there's 112A LTCG (`schedules/schedule_112a.ps1`).
 

@@ -17,9 +17,9 @@ $std = if ($Regime -eq 'new') { 75000 } else { 50000 }
 $chargeable = [math]::Max(0.0, $gross - $std)
 
 $rows = @(
-    [pscustomobject]@{ Field = 'Gross salary (incl. perquisites)'; Value = [math]::Round($gross) }
-    [pscustomobject]@{ Field = "Standard deduction ($Regime)"; Value = $std }
-    [pscustomobject]@{ Field = 'Income chargeable under Salaries'; Value = [math]::Round($chargeable) }
+    [pscustomobject]@{ Field = 'Gross salary (incl. perquisites)'; Value = [math]::Round($gross); Where = 'Schedule S: 1(a) Salary u/s 17(1) + 1(b) perquisites u/s 17(2)' }
+    [pscustomobject]@{ Field = "Standard deduction ($Regime)"; Value = $std; Where = 'Schedule S: 4(a) standard deduction u/s 16(ia)' }
+    [pscustomobject]@{ Field = 'Income chargeable under Salaries'; Value = [math]::Round($chargeable); Where = 'Schedule S: 6 (net salary) -> Part B-TI item 1' }
 )
 Show-Section 'Schedule S — Salary' $rows
 if ($OutDir) { Write-Section $rows $OutDir 'schedule_s.csv' | Out-Null }

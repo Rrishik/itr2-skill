@@ -19,20 +19,20 @@ $tta = Num (Prop $d '80tta_ttb')
 $other = Num (Prop $d 'other')
 
 $rows = @()
-$rows += [pscustomobject]@{ Field = '80CCD(2) employer NPS (both regimes)'; Value = [math]::Round($nps); Allowed = 'Yes' }
+$rows += [pscustomobject]@{ Field = '80CCD(2) employer NPS (both regimes)'; Value = [math]::Round($nps); Allowed = 'Yes'; Where = 'Schedule VI-A: 80CCD(2)' }
 if ($Regime -eq 'old') {
-    $rows += [pscustomobject]@{ Field = '80C'; Value = [math]::Round($c80); Allowed = 'Yes' }
-    $rows += [pscustomobject]@{ Field = '80D'; Value = [math]::Round($d80); Allowed = 'Yes' }
-    $rows += [pscustomobject]@{ Field = '80TTA/80TTB'; Value = [math]::Round($tta); Allowed = 'Yes' }
-    if ($other -gt 0) { $rows += [pscustomobject]@{ Field = 'Other Chapter VI-A'; Value = [math]::Round($other); Allowed = 'Yes' }}
+    $rows += [pscustomobject]@{ Field = '80C'; Value = [math]::Round($c80); Allowed = 'Yes'; Where = 'Schedule VI-A: 80C' }
+    $rows += [pscustomobject]@{ Field = '80D'; Value = [math]::Round($d80); Allowed = 'Yes'; Where = 'Schedule VI-A: 80D' }
+    $rows += [pscustomobject]@{ Field = '80TTA/80TTB'; Value = [math]::Round($tta); Allowed = 'Yes'; Where = 'Schedule VI-A: 80TTA/80TTB' }
+    if ($other -gt 0) { $rows += [pscustomobject]@{ Field = 'Other Chapter VI-A'; Value = [math]::Round($other); Allowed = 'Yes'; Where = 'Schedule VI-A: as applicable' }}
     $total = $nps + $c80 + $d80 + $tta + $other
 } else {
     foreach ($x in @(@('80C', $c80), @('80D', $d80), @('80TTA/80TTB', $tta), @('Other Chapter VI-A', $other))) {
-        if ($x[1] -gt 0) { $rows += [pscustomobject]@{ Field = $x[0]; Value = [math]::Round($x[1]); Allowed = 'NO - void under NEW (untick)' } }
+        if ($x[1] -gt 0) { $rows += [pscustomobject]@{ Field = $x[0]; Value = [math]::Round($x[1]); Allowed = 'NO - void under NEW (untick)'; Where = 'n/a under NEW regime' } }
     }
     $total = $nps
 }
-$rows += [pscustomobject]@{ Field = "Total deductions allowed ($Regime)"; Value = [math]::Round($total); Allowed = '' }
+$rows += [pscustomobject]@{ Field = "Total deductions allowed ($Regime)"; Value = [math]::Round($total); Allowed = ''; Where = 'Schedule VI-A: total -> Part B-TI' }
 
 Show-Section 'Schedule VI-A — Deductions' $rows
 if ($OutDir) { Write-Section $rows $OutDir 'schedule_via.csv' | Out-Null }

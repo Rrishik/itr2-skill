@@ -23,13 +23,13 @@ $total = $dividend + $interestTotal + $otherOs
 if ($total -eq 0) { Write-Host "No other-source income; Schedule OS not required." -ForegroundColor DarkGray; return }
 
 $rows = @(
-    [pscustomobject]@{ Field = 'Dividend income (reconcile to AIS)'; Value = [math]::Round($dividend) }
-    [pscustomobject]@{ Field = 'Savings-bank interest'; Value = [math]::Round($savings) }
-    [pscustomobject]@{ Field = 'FD/term-deposit interest'; Value = [math]::Round($fd) }
+    [pscustomobject]@{ Field = 'Dividend income (reconcile to AIS)'; Value = [math]::Round($dividend); Where = 'Schedule OS: 1a dividends (gross)' }
+    [pscustomobject]@{ Field = 'Savings-bank interest'; Value = [math]::Round($savings); Where = 'Schedule OS: 1b(i) savings-bank interest' }
+    [pscustomobject]@{ Field = 'FD/term-deposit interest'; Value = [math]::Round($fd); Where = 'Schedule OS: 1b(ii) term-deposit interest' }
 )
-if ($genInterest -gt 0) { $rows += [pscustomobject]@{ Field = 'Interest (unsplit)'; Value = [math]::Round($genInterest) } }
-if ($otherOs -gt 0) { $rows += [pscustomobject]@{ Field = 'Other'; Value = [math]::Round($otherOs) } }
-$rows += [pscustomobject]@{ Field = 'Total income from other sources'; Value = [math]::Round($total) }
+if ($genInterest -gt 0) { $rows += [pscustomobject]@{ Field = 'Interest (unsplit)'; Value = [math]::Round($genInterest); Where = 'Schedule OS: 1b interest income' } }
+if ($otherOs -gt 0) { $rows += [pscustomobject]@{ Field = 'Other'; Value = [math]::Round($otherOs); Where = 'Schedule OS: 1d any other income' } }
+$rows += [pscustomobject]@{ Field = 'Total income from other sources'; Value = [math]::Round($total); Where = 'Schedule OS: total -> Part B-TI item 5' }
 
 Show-Section 'Schedule OS — Other Sources' $rows
 if ($OutDir) { Write-Section $rows $OutDir 'schedule_os.csv' | Out-Null }
