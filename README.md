@@ -31,6 +31,16 @@ Easiest — from the cloned repo, run the helper (or just open the repo and tell
 Reload your agent afterward. The bundled scripts need **PowerShell** (and `pdftotext` for AIS PDFs);
 without them those steps just become manual.
 
+## Recommendations
+
+- **Model:** run this skill with **Claude Opus 4.8** — the multi-step reconciliation, regime
+  comparison, and tax-law reasoning benefit from the stronger model.
+- **Playwright MCP** (for foreign income): SBI does not publish historical TT buying rates openly and
+  the RBI/FBIL rate pages are JavaScript date-picker forms that a plain fetch can't read. Install the
+  [Playwright MCP server](https://github.com/microsoft/playwright-mcp) so the agent can drive the
+  **RBI reference-rate archive** (rbi.org.in → Reference Rate Archive) to pull authentic USD/INR rates
+  for each transaction/month-end date (RBI mid is the standard citable proxy for SBI TTBR).
+
 ## Usage
 
 Point your agent at the folder with your tax documents:
