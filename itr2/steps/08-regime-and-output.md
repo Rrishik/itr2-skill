@@ -4,6 +4,18 @@ Populate a single **`tax_input.json`** (salary, other sources, house property, s
 deductions, taxes paid — schema in [../references/output-template.md](../references/output-template.md))
 as the one source of truth, then run the pipeline:
 
+## Coverage check before running (source ↔ field)
+Before running the scripts, confirm `tax_input.json` is complete in **both** directions against the
+sources confirmed in Step 1:
+- **Every confirmed source → a field:** each document contributes at least one value (nothing dropped —
+  e.g. the bank certificate's FD interest actually landed in `other_sources.fd_interest`).
+- **Every field → a source:** each populated figure traces back to a named document (nothing invented;
+  no estimate unless flagged). Watch the recurring traps: a salary figure in the wrong slot (HRA/prof-tax
+  belong in `salary_*`, **not** `deductions_old`), and internal totals that must tie
+  (`slab_rate_gains` = Σ gains in `capital_gains_manual`; `taxes_paid.tds` = 26AS/Form-16 total).
+
+Then run the pipeline:
+
 - [../scripts/compute_tax.ps1](../scripts/compute_tax.ps1) `-InputJson tax_input.json -OutDir out` computes
   tax under **both** regimes (slabs, special-rate 111A/112A/112, surcharge with the 15% cap on
   special-rate gains, cess, 87A rebate, standard deduction), recommends the lower, and writes
