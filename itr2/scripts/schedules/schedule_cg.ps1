@@ -204,6 +204,7 @@ if ($OutDir) {
             Consideration = [math]::Round($a.Cons, 2); Cost = [math]::Round($a.Cost, 2)
             Expenditure = [math]::Round($a.Charges, 2); Gain = [math]::Round($a.Gain, 2)
             STT_Excluded = [math]::Round($a.STT, 2)
+            Source = ('Broker tradewise CSV: {0}' -f (Split-Path $full -Leaf))
             Where = $(switch ($k) {
                 'Equity - Short Term' { 'Schedule CG A2 (STCG 111A, STT paid)' }
                 'Equity - Long Term'  { 'Schedule CG B3 (LTCG 112A, opens 112A grid)' }
@@ -226,6 +227,7 @@ if ($OutDir) {
             Consideration = [math]::Round($mc, 2); Cost = [math]::Round($mk, 2)
             Expenditure = [math]::Round($me, 2); Gain = [math]::Round($mc - $mk - $me, 2)
             STT_Excluded = 0
+            Source = $(if (MProp $m 'source') { MProp $m 'source' } else { 'capital_gains_manual (broker/statement, entered manually)' })
             Where = $(if (MProp $m 'where') { MProp $m 'where' } else { 'Schedule CG - classify by instrument' })
         }
     }

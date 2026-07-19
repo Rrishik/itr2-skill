@@ -24,15 +24,15 @@ if ($hpObj) {
     $interest = Num (Prop $hpObj 'home_loan_interest')
     $income = $nav - $stdDed - $interest
     $rows = @(
-        [pscustomobject]@{ Field = 'Annual value (rent received)'; Value = [math]::Round($rent); Where = 'Schedule HP: 1a annual value' }
-        [pscustomobject]@{ Field = 'Less: municipal taxes'; Value = [math]::Round($municipal); Where = 'Schedule HP: 1b municipal taxes paid' }
-        [pscustomobject]@{ Field = 'Net annual value'; Value = [math]::Round($nav); Where = 'Schedule HP: 1c (auto)' }
-        [pscustomobject]@{ Field = 'Less: 30% standard deduction'; Value = $stdDed; Where = 'Schedule HP: 1d 30% u/s 24(a)' }
-        [pscustomobject]@{ Field = 'Less: home-loan interest'; Value = [math]::Round($interest); Where = 'Schedule HP: 1e interest u/s 24(b)' }
-        [pscustomobject]@{ Field = 'Income from house property'; Value = [math]::Round($income); Where = 'Schedule HP: 1f -> Part B-TI item 2' }
+        [pscustomobject]@{ Field = 'Annual value (rent received)'; Value = [math]::Round($rent); Source = 'Rent receipts / lease agreement'; Where = 'Schedule HP: 1a annual value' }
+        [pscustomobject]@{ Field = 'Less: municipal taxes'; Value = [math]::Round($municipal); Source = 'Municipal tax receipts'; Where = 'Schedule HP: 1b municipal taxes paid' }
+        [pscustomobject]@{ Field = 'Net annual value'; Value = [math]::Round($nav); Source = 'Computed (rent - municipal)'; Where = 'Schedule HP: 1c (auto)' }
+        [pscustomobject]@{ Field = 'Less: 30% standard deduction'; Value = $stdDed; Source = 'Statutory (auto, 30% of NAV)'; Where = 'Schedule HP: 1d 30% u/s 24(a)' }
+        [pscustomobject]@{ Field = 'Less: home-loan interest'; Value = [math]::Round($interest); Source = 'Home-loan interest certificate (lender)'; Where = 'Schedule HP: 1e interest u/s 24(b)' }
+        [pscustomobject]@{ Field = 'Income from house property'; Value = [math]::Round($income); Source = 'Computed'; Where = 'Schedule HP: 1f -> Part B-TI item 2' }
     )
 } else {
-    $rows = @([pscustomobject]@{ Field = 'Income from house property (net)'; Value = [math]::Round((Num $hpNet)); Where = 'Schedule HP: 1f -> Part B-TI item 2' })
+    $rows = @([pscustomobject]@{ Field = 'Income from house property (net)'; Value = [math]::Round((Num $hpNet)); Source = 'tax_input.json house_property (pre-computed net)'; Where = 'Schedule HP: 1f -> Part B-TI item 2' })
 }
 Show-Section 'Schedule HP — House Property' $rows
 if ($OutDir) { Merge-Return $OutDir 'house_property' $rows | Out-Null }

@@ -19,11 +19,11 @@ $ptax = if ($Regime -eq 'old') { Num (Prop $in 'salary_professional_tax') } else
 $chargeable = [math]::Max(0.0, $gross - $std - $hra - $ptax)
 
 $rows = @(
-    [pscustomobject]@{ Field = 'Gross salary (incl. perquisites)'; Value = [math]::Round($gross); Where = 'Schedule S: 1(a) Salary u/s 17(1) + 1(b) perquisites u/s 17(2)' }
-    [pscustomobject]@{ Field = "Standard deduction ($Regime)"; Value = $std; Where = 'Schedule S: 4(a) standard deduction u/s 16(ia)' }
+    [pscustomobject]@{ Field = 'Gross salary (incl. perquisites)'; Value = [math]::Round($gross); Source = 'Form 16 Part B (gross salary) + any foreign RSU/ESPP perquisite'; Where = 'Schedule S: 1(a) Salary u/s 17(1) + 1(b) perquisites u/s 17(2)' }
+    [pscustomobject]@{ Field = "Standard deduction ($Regime)"; Value = $std; Source = 'Statutory (auto)'; Where = 'Schedule S: 4(a) standard deduction u/s 16(ia)' }
 )
-if ($hra -gt 0) { $rows += [pscustomobject]@{ Field = 'HRA exemption (old only)'; Value = [math]::Round($hra); Where = 'Schedule S: 2(iii) exempt allowance u/s 10(13A)' } }
-if ($ptax -gt 0) { $rows += [pscustomobject]@{ Field = 'Professional tax (old only)'; Value = [math]::Round($ptax); Where = 'Schedule S: 4(c) professional tax u/s 16(iii)' } }
-$rows += [pscustomobject]@{ Field = 'Income chargeable under Salaries'; Value = [math]::Round($chargeable); Where = 'Schedule S: 6 (net salary) -> Part B-TI item 1' }
+if ($hra -gt 0) { $rows += [pscustomobject]@{ Field = 'HRA exemption (old only)'; Value = [math]::Round($hra); Source = 'Form 16 / rent proofs (s.10(13A) working)'; Where = 'Schedule S: 2(iii) exempt allowance u/s 10(13A)' } }
+if ($ptax -gt 0) { $rows += [pscustomobject]@{ Field = 'Professional tax (old only)'; Value = [math]::Round($ptax); Source = 'Form 16 / salary slips'; Where = 'Schedule S: 4(c) professional tax u/s 16(iii)' } }
+$rows += [pscustomobject]@{ Field = 'Income chargeable under Salaries'; Value = [math]::Round($chargeable); Source = 'Computed (gross - deductions)'; Where = 'Schedule S: 6 (net salary) -> Part B-TI item 1' }
 Show-Section 'Schedule S — Salary' $rows
 if ($OutDir) { Merge-Return $OutDir 'salary' $rows | Out-Null }

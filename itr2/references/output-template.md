@@ -15,7 +15,10 @@ The pieces:
   `recommended_regime`, `salary`, `house_property`, `other_sources`, `deductions`, `capital_gains_head`,
   `capital_gains_234c`, plus `meta`. Section rows carry a **`Where`** column naming the exact utility field
   the value goes into (e.g. `Schedule S: 4(a) standard deduction u/s 16(ia)`, `Schedule CG A2 (STCG 111A)`),
-  so the user knows precisely which box to populate.
+  so the user knows precisely which box to populate. Income/deduction rows also carry a **`Source`** column
+  naming the document each figure came from (Form 16, dividend report/AIS, bank interest certificate, broker
+  tradewise CSV, `capital_gains_manual`, etc.) so a human can cross-verify each value against its source;
+  computed rows say `Computed`.
 - **`ITR2_data_entry.md`** — the combined data-entry sheet (rendered from `return.json`).
 - **`Schedule112A.csv`** — the uploadable 112A file, when there's 112A LTCG (`schedules/schedule_112a.ps1`).
   This stays a CSV because the portal requires that exact format.

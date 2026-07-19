@@ -23,13 +23,13 @@ $total = $dividend + $interestTotal + $otherOs
 if ($total -eq 0) { Write-Host "No other-source income; Schedule OS not required." -ForegroundColor DarkGray; return }
 
 $rows = @(
-    [pscustomobject]@{ Field = 'Dividend income (reconcile to AIS)'; Value = [math]::Round($dividend); Where = 'Schedule OS: 1a dividends (gross)' }
-    [pscustomobject]@{ Field = 'Savings-bank interest'; Value = [math]::Round($savings); Where = 'Schedule OS: 1b(i) savings-bank interest' }
-    [pscustomobject]@{ Field = 'FD/term-deposit interest'; Value = [math]::Round($fd); Where = 'Schedule OS: 1b(ii) term-deposit interest' }
+    [pscustomobject]@{ Field = 'Dividend income (reconcile to AIS)'; Value = [math]::Round($dividend); Source = 'Dividend report / AIS (Indian + foreign dividends, at slab)'; Where = 'Schedule OS: 1a dividends (gross)' }
+    [pscustomobject]@{ Field = 'Savings-bank interest'; Value = [math]::Round($savings); Source = 'Bank interest certificate / passbook / AIS'; Where = 'Schedule OS: 1b(i) savings-bank interest' }
+    [pscustomobject]@{ Field = 'FD/term-deposit interest'; Value = [math]::Round($fd); Source = 'Bank/FD interest certificate / AIS'; Where = 'Schedule OS: 1b(ii) term-deposit interest' }
 )
-if ($genInterest -gt 0) { $rows += [pscustomobject]@{ Field = 'Interest (unsplit)'; Value = [math]::Round($genInterest); Where = 'Schedule OS: 1b interest income' } }
-if ($otherOs -gt 0) { $rows += [pscustomobject]@{ Field = 'Other'; Value = [math]::Round($otherOs); Where = 'Schedule OS: 1d any other income' } }
-$rows += [pscustomobject]@{ Field = 'Total income from other sources'; Value = [math]::Round($total); Where = 'Schedule OS: total -> Part B-TI item 5' }
+if ($genInterest -gt 0) { $rows += [pscustomobject]@{ Field = 'Interest (unsplit)'; Value = [math]::Round($genInterest); Source = 'Bank certificates / AIS'; Where = 'Schedule OS: 1b interest income' } }
+if ($otherOs -gt 0) { $rows += [pscustomobject]@{ Field = 'Other'; Value = [math]::Round($otherOs); Source = 'As applicable (see source doc)'; Where = 'Schedule OS: 1d any other income' } }
+$rows += [pscustomobject]@{ Field = 'Total income from other sources'; Value = [math]::Round($total); Source = 'Computed (sum of above)'; Where = 'Schedule OS: total -> Part B-TI item 5' }
 
 Show-Section 'Schedule OS — Other Sources' $rows
 if ($OutDir) { Merge-Return $OutDir 'other_sources' $rows | Out-Null }
