@@ -35,4 +35,4 @@ if ($hpObj) {
     $rows = @([pscustomobject]@{ Field = 'Income from house property (net)'; Value = [math]::Round((Num $hpNet)); Where = 'Schedule HP: 1f -> Part B-TI item 2' })
 }
 Show-Section 'Schedule HP — House Property' $rows
-if ($OutDir) { Write-Section $rows $OutDir 'schedule_hp.csv' | Out-Null }
+if ($OutDir) { Merge-Return $OutDir 'house_property' $rows | Out-Null }

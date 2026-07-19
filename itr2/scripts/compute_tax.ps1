@@ -183,8 +183,9 @@ if ($OutDir) {
         [pscustomobject]@{ LineItem = $k; OLD = $old[$k]; NEW = $new[$k] }
     }
     $rows += [pscustomobject]@{ LineItem = 'Recommended regime'; OLD = ''; NEW = $recommend }
-    $outPath = Join-Path $OutDir 'tax_regime_comparison.csv'
-    $rows | Export-Csv -Path $outPath -NoTypeInformation
-    Write-Host ("Wrote: {0}" -f $outPath) -ForegroundColor Green
+    . "$PSScriptRoot\schedules\_common.ps1"
+    Merge-Return $OutDir 'tax_computation' @($rows) | Out-Null
+    Merge-Return $OutDir 'recommended_regime' $recommend | Out-Null
+    Write-Host ("Wrote return.json section: tax_computation") -ForegroundColor Green
     Write-Host ""
 }

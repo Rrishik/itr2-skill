@@ -32,4 +32,4 @@ if ($otherOs -gt 0) { $rows += [pscustomobject]@{ Field = 'Other'; Value = [math
 $rows += [pscustomobject]@{ Field = 'Total income from other sources'; Value = [math]::Round($total); Where = 'Schedule OS: total -> Part B-TI item 5' }
 
 Show-Section 'Schedule OS — Other Sources' $rows
-if ($OutDir) { Write-Section $rows $OutDir 'schedule_os.csv' | Out-Null }
+if ($OutDir) { Merge-Return $OutDir 'other_sources' $rows | Out-Null }

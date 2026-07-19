@@ -24,15 +24,16 @@ Then run the pipeline:
 
 - [../scripts/compute_tax.ps1](../scripts/compute_tax.ps1) `-InputJson tax_input.json -OutDir out` computes
   tax under **both** regimes (slabs, special-rate 111A/112A/112, surcharge with the 15% cap on
-  special-rate gains, cess, 87A rebate, standard deduction), recommends the lower, and writes
-  `tax_regime_comparison.csv`. **Do the tax math with this, not by hand.**
+  special-rate gains, cess, 87A rebate, standard deduction), recommends the lower, and writes the
+  `tax_computation` section into `return.json`. **Do the tax math with this, not by hand.**
 - Per-schedule emitters in [../scripts/schedules/](../scripts/schedules/) each read the same JSON and
-  write one CSV: `schedule_s.ps1` (Salary), `schedule_hp.ps1` (House Property), `schedule_os.ps1` (Other
-  Sources, reconcile to AIS), `schedule_via.ps1` (Deductions — flags OLD-only items void under NEW),
-  `schedule_cg.ps1` (capital gains), `schedule_112a.ps1` (112A CSV). Each self-skips when its input is absent.
+  merge one section into the shared **`return.json`**: `schedule_s.ps1` (Salary), `schedule_hp.ps1` (House
+  Property), `schedule_os.ps1` (Other Sources, reconcile to AIS), `schedule_via.ps1` (Deductions — flags
+  OLD-only items void under NEW), `schedule_cg.ps1` (capital gains). `schedule_112a.ps1` still writes the
+  uploadable **`Schedule112A.csv`** (the portal needs that exact CSV). Each self-skips when its input is absent.
 - [../scripts/build_return.ps1](../scripts/build_return.ps1) `-InputJson tax_input.json -OutDir out
-  [-TradewiseCsv ...]` orchestrates all of the above (auto-picking the recommended regime) and stitches
-  every section CSV into one **`ITR2_data_entry.md`**.
+  [-TradewiseCsv ...]` orchestrates all of the above (auto-picking the recommended regime), records filing
+  meta, and renders **`return.json`** into one **`ITR2_data_entry.md`**.
 
 Also give the user a **schedule tick-list** for the utility's "Select Schedule" step — see
 [schedule-selection.md](./schedule-selection.md).

@@ -1,15 +1,16 @@
-﻿# Orchestrator: runs every per-schedule emitter against a shared tax_input.json,
-# then stitches all the section CSVs into one Markdown data-entry sheet.
+﻿# Orchestrator: runs every per-schedule emitter against a shared tax_input.json.
+# Each emitter merges its section into a single return.json (the structured
+# output); build_return then renders return.json into one Markdown data-entry sheet.
 #
 # It runs (when the relevant input is present):
-#   schedules/schedule_s.ps1     -> schedule_s.csv     (Salary)
-#   schedules/schedule_hp.ps1    -> schedule_hp.csv    (House Property)
-#   schedules/schedule_os.ps1    -> schedule_os.csv    (Other Sources)
-#   schedules/schedule_via.ps1   -> schedule_via.csv   (Deductions)
-#   schedules/schedule_112a.ps1  -> Schedule112A.csv   (uploadable 112A, if present)
-#   schedules/schedule_cg.ps1    -> cg_head_aggregates.csv, cg_234c_split.csv
-#   compute_tax.ps1              -> tax_regime_comparison.csv (Part B-TI/TTI + regime)
-# then writes ITR2_data_entry.md combining them all.
+#   compute_tax.ps1              -> return.json: tax_computation, recommended_regime
+#   schedules/schedule_s.ps1     -> return.json: salary
+#   schedules/schedule_hp.ps1    -> return.json: house_property
+#   schedules/schedule_os.ps1    -> return.json: other_sources
+#   schedules/schedule_via.ps1   -> return.json: deductions
+#   schedules/schedule_cg.ps1    -> return.json: capital_gains_head, capital_gains_234c
+#   schedules/schedule_112a.ps1  -> Schedule112A.csv   (uploadable artifact, stays CSV)
+# then writes ITR2_data_entry.md from return.json.
 #
 # Usage:
 #   powershell -NoProfile -ExecutionPolicy Bypass -File build_return.ps1 `
@@ -31,10 +32,10 @@ $OutDir = (Resolve-Path $OutDir).Path
 
 # 1. Tax first, to learn the recommended regime.
 & "$scripts\compute_tax.ps1" -InputJson $InputJson -OutDir $OutDir | Out-Null
-$taxCsv = Join-Path $OutDir 'tax_regime_comparison.csv'
-$tax = Import-Csv $taxCsv
+$returnJson = Join-Path $OutDir 'return.json'
+$doc = Get-Content $returnJson -Raw | ConvertFrom-Json
 if (-not $Regime) {
-    $rec = ($tax | Where-Object LineItem -eq 'Recommended regime').NEW
+    $rec = $doc.recommended_regime
     $Regime = if ($rec -eq 'OLD') { 'old' } else { 'new' }
 }
 Write-Host "Using regime: $Regime" -ForegroundColor Cyan
@@ -48,27 +49,34 @@ Write-Host "Using regime: $Regime" -ForegroundColor Cyan
 if ($TradewiseCsv) { & "$scripts\schedules\schedule_cg.ps1" -Path $TradewiseCsv -InputJson $InputJson -OutDir $OutDir | Out-Null }
 else { & "$scripts\schedules\schedule_cg.ps1" -InputJson $InputJson -OutDir $OutDir | Out-Null }
 
-# 3. Stitch the CSVs into one MD.
-function Csv-ToMdTable([string]$path) {
-    if (-not (Test-Path $path)) { return $null }
-    $rows = Import-Csv $path
-    if (-not $rows) { return $null }
+# 3. Stitch the return.json sections into one MD.
+function Rows-ToMdTable($rows) {
+    $rows = @($rows)
+    if (-not $rows -or $rows.Count -eq 0) { return $null }
     $cols = $rows[0].PSObject.Properties.Name
+    $esc = { param($v) ("$v") -replace '\|', '\|' }
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.AppendLine('| ' + ($cols -join ' | ') + ' |')
     [void]$sb.AppendLine('|' + (($cols | ForEach-Object { '---' }) -join '|') + '|')
     foreach ($r in $rows) {
-        $vals = $cols | ForEach-Object { $r.$_ }
+        $vals = $cols | ForEach-Object { & $esc $r.$_ }
         [void]$sb.AppendLine('| ' + ($vals -join ' | ') + ' |')
     }
     return $sb.ToString()
 }
 
-$md = New-Object System.Text.StringBuilder
+# Record filing meta in the same return.json.
+. "$scripts\schedules\_common.ps1"
 function PropOr($obj, $name, $default) { if ($obj.PSObject.Properties.Name -contains $name) { return $obj.$name } else { return $default } }
 $pan = PropOr $in 'pan' ''
 $name = PropOr $in 'taxpayer' ''
 $ay = PropOr $in 'ay' ''
+Merge-Return $OutDir 'meta' ([pscustomobject]@{ taxpayer = $name; pan = $pan; ay = $ay; regime = $Regime.ToUpper() }) | Out-Null
+
+# Re-read the fully populated return.json and render.
+$doc = Get-Content $returnJson -Raw | ConvertFrom-Json
+
+$md = New-Object System.Text.StringBuilder
 [void]$md.AppendLine("# ITR-2 data-entry sheet")
 [void]$md.AppendLine("")
 [void]$md.AppendLine("- Taxpayer: $name")
@@ -78,16 +86,17 @@ $ay = PropOr $in 'ay' ''
 [void]$md.AppendLine("")
 
 $sections = @(
-    @('Schedule S — Salary', 'schedule_s.csv'),
-    @('Schedule HP — House Property', 'schedule_hp.csv'),
-    @('Schedule CG — Capital Gains (head aggregates)', 'cg_head_aggregates.csv'),
-    @('Schedule CG — 234C quarterly split', 'cg_234c_split.csv'),
-    @('Schedule OS — Other Sources', 'schedule_os.csv'),
-    @('Schedule VI-A — Deductions', 'schedule_via.csv'),
-    @('Part B-TI / TTI — Tax computation & regime comparison', 'tax_regime_comparison.csv')
+    @('Schedule S — Salary', 'salary'),
+    @('Schedule HP — House Property', 'house_property'),
+    @('Schedule CG — Capital Gains (head aggregates)', 'capital_gains_head'),
+    @('Schedule CG — 234C quarterly split', 'capital_gains_234c'),
+    @('Schedule OS — Other Sources', 'other_sources'),
+    @('Schedule VI-A — Deductions', 'deductions'),
+    @('Part B-TI / TTI — Tax computation & regime comparison', 'tax_computation')
 )
 foreach ($s in $sections) {
-    $tbl = Csv-ToMdTable (Join-Path $OutDir $s[1])
+    if (-not ($doc.PSObject.Properties.Name -contains $s[1])) { continue }
+    $tbl = Rows-ToMdTable $doc.($s[1])
     if ($null -eq $tbl) { continue }
     [void]$md.AppendLine("## $($s[0])")
     [void]$md.AppendLine("")

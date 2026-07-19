@@ -30,6 +30,7 @@ param(
     [string]$InputJson,
     [string]$OutDir
 )
+. "$PSScriptRoot\_common.ps1"
 
 if (-not $Path -and $InputJson) {
     $in = Get-Content (Resolve-Path $InputJson).Path -Raw | ConvertFrom-Json
@@ -217,7 +218,6 @@ if ($OutDir) {
             })
         }
     }
-    $headPath = Join-Path $OutDir 'cg_head_aggregates.csv'
     $headRows = @($headRows)
     foreach ($m in $manual) {
         $mc = MNum (MProp $m 'consideration'); $mk = MNum (MProp $m 'cost'); $me = MNum (MProp $m 'expenditure')
@@ -229,7 +229,7 @@ if ($OutDir) {
             Where = $(if (MProp $m 'where') { MProp $m 'where' } else { 'Schedule CG - classify by instrument' })
         }
     }
-    $headRows | Export-Csv -Path $headPath -NoTypeInformation
+    Merge-Return $OutDir 'capital_gains_head' $headRows | Out-Null
 
     $splitRows = foreach ($k in $agg.Keys) {
         $hr = $withDates | Where-Object { $_.Section -eq $k }
@@ -254,10 +254,8 @@ if ($OutDir) {
             }
         }
     }
-    $splitPath = Join-Path $OutDir 'cg_234c_split.csv'
-    $splitRows | Export-Csv -Path $splitPath -NoTypeInformation
+    Merge-Return $OutDir 'capital_gains_234c' $splitRows | Out-Null
 
-    Write-Host ("Wrote: {0}" -f $headPath) -ForegroundColor Green
-    Write-Host ("Wrote: {0}" -f $splitPath) -ForegroundColor Green
+    Write-Host ("Wrote return.json sections: capital_gains_head, capital_gains_234c") -ForegroundColor Green
     Write-Host ""
 }

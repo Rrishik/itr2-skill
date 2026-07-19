@@ -2,6 +2,7 @@
 *.pdf
 *.csv
 tax_input*.json
+return.json
 ITR2_data_entry*.md
 docs/
 docs_*/

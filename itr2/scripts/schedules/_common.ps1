@@ -19,6 +19,19 @@ function Write-Section([object[]]$rows, [string]$OutDir, [string]$fileName) {
     Write-Host ("Wrote: {0}" -f $path) -ForegroundColor Green
     return $path
 }
+# Merge one section into the single shared return.json (read-modify-write).
+# Emitters run sequentially, so no locking is needed. $Value is any JSON-able
+# object (a row array, or a scalar like the recommended regime).
+function Merge-Return([string]$OutDir, [string]$Key, $Value) {
+    if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir | Out-Null }
+    $OutDir = (Resolve-Path $OutDir).Path
+    $path = Join-Path $OutDir 'return.json'
+    if (Test-Path $path) { $doc = Get-Content $path -Raw | ConvertFrom-Json } else { $doc = [pscustomobject]@{} }
+    if ($doc.PSObject.Properties.Name -contains $Key) { $doc.$Key = $Value }
+    else { $doc | Add-Member -NotePropertyName $Key -NotePropertyValue $Value }
+    ($doc | ConvertTo-Json -Depth 12) | Set-Content -Path $path -Encoding UTF8
+    return $path
+}
 function Show-Section([string]$title, [object[]]$rows) {
     Write-Host ""
     Write-Host "=== $title ===" -ForegroundColor Cyan

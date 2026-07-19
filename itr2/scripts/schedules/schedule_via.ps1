@@ -35,4 +35,4 @@ if ($Regime -eq 'old') {
 $rows += [pscustomobject]@{ Field = "Total deductions allowed ($Regime)"; Value = [math]::Round($total); Allowed = ''; Where = 'Schedule VI-A: total -> Part B-TI' }
 
 Show-Section 'Schedule VI-A — Deductions' $rows
-if ($OutDir) { Write-Section $rows $OutDir 'schedule_via.csv' | Out-Null }
+if ($OutDir) { Merge-Return $OutDir 'deductions' $rows | Out-Null }

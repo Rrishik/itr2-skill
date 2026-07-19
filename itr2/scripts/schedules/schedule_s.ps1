@@ -26,4 +26,4 @@ if ($hra -gt 0) { $rows += [pscustomobject]@{ Field = 'HRA exemption (old only)'
 if ($ptax -gt 0) { $rows += [pscustomobject]@{ Field = 'Professional tax (old only)'; Value = [math]::Round($ptax); Where = 'Schedule S: 4(c) professional tax u/s 16(iii)' } }
 $rows += [pscustomobject]@{ Field = 'Income chargeable under Salaries'; Value = [math]::Round($chargeable); Where = 'Schedule S: 6 (net salary) -> Part B-TI item 1' }
 Show-Section 'Schedule S — Salary' $rows
-if ($OutDir) { Write-Section $rows $OutDir 'schedule_s.csv' | Out-Null }
+if ($OutDir) { Merge-Return $OutDir 'salary' $rows | Out-Null }

@@ -63,8 +63,9 @@ Conditional:
 
 ## Pipeline at a glance
 `tax_input.json` is the single source of truth. [scripts/build_return.ps1](./scripts/build_return.ps1)
-runs `compute_tax.ps1` + every `schedules/schedule_*.ps1` (each self-skips when its input is absent) and
-stitches the section CSVs into one `ITR2_data_entry.md`. See
+runs `compute_tax.ps1` + every `schedules/schedule_*.ps1` (each self-skips when its input is absent); each
+merges its section into a single **`return.json`**, which `build_return.ps1` renders into one
+`ITR2_data_entry.md`. `schedule_112a.ps1` also writes the uploadable `Schedule112A.csv`. See
 [references/output-template.md](./references/output-template.md) for deliverable shapes.
 
 ## Session state (survive long sessions / compaction)
