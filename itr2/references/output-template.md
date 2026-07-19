@@ -56,6 +56,7 @@ computes the balance. Example:
   "salary_gross": 0,
   "other_sources": { "dividend": 0, "savings_interest": 0, "fd_interest": 0 },
   "house_property": 0,
+  "slab_rate_gains": 0,
   "special_rate_gains": { "stcg_111a": 0, "ltcg_112a": 0, "ltcg_112": 0 },
   "deduction_80ccd2": 0,
   "deductions_old": { "80c": 0, "80d": 0, "80tta_ttb": 0, "other": 0 },
@@ -64,6 +65,8 @@ computes the balance. Example:
 ```
 - `special_rate_gains` come from `schedules/schedule_cg.ps1` (STT already excluded): 111a=listed-equity STCG,
   112a=listed-equity LTCG (gross, before the ₹1.25L exemption the script applies), 112=bonds/SGB/foreign LTCG.
+- `slab_rate_gains` = capital gains taxed at slab rate, not a special rate: specified debt MFs (s.50AA),
+  foreign equity held <24m, unlisted-share STCG. They add to slab income (never to `other_sources`).
 - `deduction_80ccd2` (employer NPS) is allowed under **both** regimes; everything in `deductions_old`
   is OLD-regime only.
 

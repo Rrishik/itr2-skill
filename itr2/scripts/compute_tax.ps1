@@ -15,8 +15,9 @@
 #   {
 #     "ay": "2026-27", "senior_citizen": false,
 #     "salary_gross": 0,                 // before standard deduction
-#     "other_sources": { "dividend": 0, "interest": 0 },
+#     "other_sources": { "dividend": 0, "savings_interest": 0, "fd_interest": 0, "interest": 0, "other": 0 },
 #     "house_property": 0,               // net (can be negative, capped -2L)
+#     "slab_rate_gains": 0,              // CG taxed at slab (debt MF s.50AA, foreign equity <24m, unlisted STCG)
 #     "special_rate_gains": {
 #        "stcg_111a": 0,                 // 20%
 #        "ltcg_112a": 0,                 // 12.5% over 1.25L exemption
@@ -47,9 +48,11 @@ $senior = [bool](Prop $in 'senior_citizen')
 $salaryGross = Num (Prop $in 'salary_gross')
 $os = Prop $in 'other_sources'
 $dividend = Num (Prop $os 'dividend')
-$interest = Num (Prop $os 'interest')
+# Interest can be split (savings_interest/fd_interest) or unsplit (interest); mirror schedule_os.ps1.
+$interest = (Num (Prop $os 'savings_interest')) + (Num (Prop $os 'fd_interest')) + (Num (Prop $os 'interest')) + (Num (Prop $os 'other'))
 $hp = Num (Prop $in 'house_property')
 if ($hp -lt -200000) { $hp = -200000 }   # set-off cap
+$slabGains = Num (Prop $in 'slab_rate_gains')
 
 $sr = Prop $in 'special_rate_gains'
 $stcg111a = Num (Prop $sr 'stcg_111a')
@@ -105,8 +108,7 @@ function Surcharge([double]$totalIncome, [double]$normalTax, [double]$specialTax
 function Compute-Regime([string]$name) {
     $stdDed = if ($name -eq 'new') { 75000 } else { 50000 }
     $salaryNet = [math]::Max(0.0, $salaryGross - $stdDed)
-    $grossSlab = $salaryNet + $dividend + $interest + $hp
-
+    $grossSlab = $salaryNet + $dividend + $interest + $hp + $slabGains
     if ($name -eq 'new') {
         $chapVI = $nps
     } else {
@@ -135,6 +137,7 @@ function Compute-Regime([string]$name) {
     return [ordered]@{
         Regime = $name
         'Slab income' = [math]::Round($slabIncome)
+        '  of which slab-rate CG' = [math]::Round($slabGains)
         'Special-rate income' = [math]::Round($specialIncome)
         'Total income' = [math]::Round($totalIncome)
         'Tax on slab income' = [math]::Round($normalTax)
