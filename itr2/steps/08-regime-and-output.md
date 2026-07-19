@@ -14,6 +14,12 @@ sources confirmed in Step 1:
   belong in `salary_*`, **not** `deductions_old`), and internal totals that must tie
   (`slab_rate_gains` = Σ gains in `capital_gains_manual`; `taxes_paid.tds` = 26AS/Form-16 total).
 
+Run [../scripts/verify_input.ps1](../scripts/verify_input.ps1) `-InputJson tax_input.json` to enforce the
+**mechanical** half deterministically (typo'd keys, `slab_rate_gains` ≠ Σ `capital_gains_manual`,
+misplaced salary deductions, missing `tradewise_csv`). Exit code 1 = a FAIL to fix before proceeding;
+WARNs need a look. The **source↔field completeness** half above stays your judgement — a script can't
+know a document is missing.
+
 Then run the pipeline:
 
 - [../scripts/compute_tax.ps1](../scripts/compute_tax.ps1) `-InputJson tax_input.json -OutDir out` computes
