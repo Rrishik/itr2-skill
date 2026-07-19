@@ -3,11 +3,11 @@
 ## Short-Term Capital Gains (Schedule CG → Section A)
 | Item | Use for | Key input fields |
 |---|---|---|
-| **2. Equity/equity-MF, STT paid — 111A [for others]** | Listed shares + equity MF sold with STT | 2a Full value of consideration (aggregate sale); 2bi Cost of acquisition (aggregate cost); 2bii improvement=0; 2biii expenditure (deductible charges); 2d loss disallowed u/s 94(7)/(8) |
-| **5. Assets other than A1–A4** | Debt MF (specified/unspecified), unlisted, other | i.a/i.b (unquoted shares) = 0; ii Full value of consideration; bi Cost of acquisition; balance auto |
-| 6 Amount deemed STCG | rare | 0 |
-| 7 Pass-through (PTI) | only if PTI slips | 0 |
-| 8 DTAA / A(A) buyback | NR / buyback only | 0 |
+| **A2. Equity/equity-MF, STT paid — 111A [for others]** | Listed shares + equity MF sold with STT | 2a Full value of consideration (aggregate sale); 2bi Cost of acquisition (aggregate cost); 2bii improvement=0; 2biii expenditure (deductible charges); 2d loss disallowed u/s 94(7)/(8) |
+| **A5. Assets other than A1–A4** | Debt MF (specified/unspecified), unlisted, **foreign shares held ≤24m** | i.a/i.b (unquoted shares) = 0; ii Full value of consideration; bi Cost of acquisition; balance auto |
+| A6 Amount deemed STCG | rare | 0 |
+| A7 Pass-through (PTI) | only if PTI slips | 0 |
+| A8 DTAA / A(A) buyback | NR / buyback only | 0 |
 
 - Enter **aggregate sale and cost**, not net gain. Utility computes balance = sale − (cost + expenditure).
 - **Specified debt MF** (bought on/after 1-Apr-2023): always slab rate regardless of holding → item 5.
@@ -21,13 +21,16 @@
 ## Long-Term Capital Gains (Schedule CG → Section B)
 | Item | Use for |
 |---|---|
-| 2. Listed securities/ZCB u/s 112(1) | bonds/GDR, non-STT — NOT ordinary equity |
-| **3. Equity/equity-MF, STT paid — 112A** | all listed equity + equity MF LTCG (opens Schedule 112A) |
-| 8 Assets where B1–B7 N/A | other LTCG |
-| 9/10/11 | deemed / PTI / DTAA — usually 0 |
+| **B2. Listed securities/ZCB u/s 112(1)** | listed bonds, **SGB sold on the exchange**, ZCB, GDR — non-STT; NOT ordinary equity |
+| **B3. Equity/equity-MF, STT paid — 112A** | all listed equity + equity MF LTCG (opens Schedule 112A) |
+| **B8. Assets where B1–B7 N/A** | other LTCG incl. **foreign shares held >24 months** (no STT) |
+| B9/B10/B11 | deemed / PTI / DTAA — usually 0 |
 
 - ₹1.25L (post-FY24) LTCG exemption under 112A is applied by the utility at tax computation — do
   NOT subtract it in the CG grid; enter gross LTCG.
+- **SGB (Sovereign Gold Bond):** a **secondary-market sale on the exchange** → B2 (s.112, 12.5%, no
+  indexation, no ₹1.25L exemption). But **held to maturity (8 yr)** or **premature redemption to RBI
+  (after 5 yr)** → the gain is **fully exempt** → report in the **Exempt Income (EI)** schedule, not CG.
 
 ## Rate reference (post 23-Jul-2024)
 | Head | Rate |
@@ -48,8 +51,8 @@ If any disposal occurred **before 23-Jul-2024**, split into pre/post buckets (ol
 
 ## Foreign stocks / ESPP / RSU / foreign dividends
 - **Sale of foreign shares** = capital gains but NOT 111A/112A (no STT). Holding >24 months → LTCG u/s
-  112(1) at 12.5% (no ₹1.25L exemption, no grandfathering) → LTCG item 8 ("assets where B1–B7 N/A").
-  ≤24 months → STCG at slab → STCG item 5. Convert cost/sale using SBI TT buying rate on the relevant dates.
+  112(1) at 12.5% (no ₹1.25L exemption, no grandfathering) → LTCG **item B8** ("assets where B1–B7 N/A").
+  ≤24 months → STCG at slab → STCG **item A5**. Convert cost/sale using SBI TT buying rate on the relevant dates.
   - **Holding period runs from the vest date, not the grant/award date.** Confirm the exact acquisition
     date and per-lot cost basis from the broker's **closed-lots / gain-loss report**; a lot near the
     24-month boundary can flip STCG↔LTCG. The broker's US **LONG/SHORT** tag is a US >12-month concept
