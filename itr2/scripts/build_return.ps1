@@ -86,6 +86,27 @@ function SectionF-Grid($rows) {
     }
     return $sb.ToString()
 }
+
+# Pivot the other_sources_234c rows into the OS accrual/receipt grid:
+# one row per income item, one column per quarter (Q1..Q5), + Total and Source.
+function OS-Grid($rows) {
+    $rows = @($rows)
+    if (-not $rows -or $rows.Count -eq 0) { return $null }
+    $qCols = @('Q1 (<=15-Jun)', 'Q2 (16-Jun..15-Sep)', 'Q3 (16-Sep..15-Dec)', 'Q4 (16-Dec..15-Mar)', 'Q5 (16-Mar..31-Mar)')
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.AppendLine('| OS item | ' + ($qCols -join ' | ') + ' | Total | Source |')
+    [void]$sb.AppendLine('|' + ('---|' * ($qCols.Count + 3)))
+    foreach ($grp in ($rows | Group-Object Item)) {
+        $cells = foreach ($q in $qCols) {
+            $sum = ($grp.Group | Where-Object { $_.Quarter -eq $q } | Measure-Object -Property Amount -Sum).Sum
+            if ($sum) { [math]::Round($sum) } else { 0 }
+        }
+        $total = ($grp.Group | Measure-Object -Property Amount -Sum).Sum
+        $src = ($grp.Group | Select-Object -First 1).Source
+        [void]$sb.AppendLine('| ' + $grp.Name + ' | ' + ($cells -join ' | ') + ' | ' + [math]::Round($total) + ' | ' + $src + ' |')
+    }
+    return $sb.ToString()
+}
 . "$scripts\schedules\_common.ps1"
 function PropOr($obj, $name, $default) { if ($obj.PSObject.Properties.Name -contains $name) { return $obj.$name } else { return $default } }
 $pan = PropOr $in 'pan' ''
@@ -137,6 +158,17 @@ foreach ($s in $sections) {
             [void]$md.AppendLine("")
             [void]$md.AppendLine($grid)
             [void]$md.AppendLine("_Each row must sum to that head's annual gain; the utility rejects negatives (net a loss-quarter into a later positive one)._")
+            [void]$md.AppendLine("")
+        }
+    }
+    # After Schedule OS, emit its 234C accrual/receipt grid if a split was supplied.
+    if ($key -eq 'other_sources' -and ($doc.PSObject.Properties.Name -contains 'other_sources_234c')) {
+        $osGrid = OS-Grid $doc.other_sources_234c
+        if ($osGrid) {
+            [void]$md.AppendLine("### 234C accrual/receipt grid (enter these cells)")
+            [void]$md.AppendLine("")
+            [void]$md.AppendLine($osGrid)
+            [void]$md.AppendLine("_Split OS income by the quarter each amount was credited; each row must sum to that item's annual total. Dividend goes in row 3a (Sl.no. 1a(i))._")
             [void]$md.AppendLine("")
         }
     }

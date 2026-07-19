@@ -12,8 +12,9 @@ The pieces:
 
 - **`tax_input.json`** — the machine-readable input (schema below).
 - **`return.json`** — the single structured output. Each emitter writes one section key: `tax_computation`,
-  `recommended_regime`, `salary`, `house_property`, `other_sources`, `deductions`, `capital_gains_head`,
-  `capital_gains_234c`, plus `meta`. Section rows carry a **`Where`** column naming the exact utility field
+  `recommended_regime`, `salary`, `house_property`, `other_sources`, `other_sources_234c`, `deductions`,
+  `capital_gains_head`, `capital_gains_234c`, plus `meta`. Section rows carry a **`Where`** column naming the
+  exact utility field
   the value goes into (e.g. `Schedule S: 4(a) standard deduction u/s 16(ia)`, `Schedule CG A2 (STCG 111A)`),
   so the user knows precisely which box to populate. Income/deduction rows also carry a **`Source`** column
   naming the document each figure came from (Form 16, dividend report/AIS, bank interest certificate, broker
@@ -38,6 +39,7 @@ sub-sections under a schedule are `###`); a schedule/sub-section is omitted when
 ### 234C quarterly split (by head)
 ### Section F — as the utility grid (enter these cells)
 ## Schedule OS — Other Sources
+### 234C accrual/receipt grid (enter these cells)
 ## Schedule VI-A — Deductions
 ## Part B-TI / TTI — Tax computation & regime comparison
 ```
@@ -64,7 +66,9 @@ Sections in detail:
   Only rows with gains appear. Each row must sum to that head's annual gain; the utility rejects negatives
   (net a loss-quarter into a later positive one). Full row→rate map in
   [schedule-mapping.md](./schedule-mapping.md#quarterly-breakup--schedule-cg-section-f-and-os-234c-grid).
-- **Schedule OS**: dividends, interest — reconciled to AIS.
+- **Schedule OS**: dividends, interest — reconciled to AIS. When a quarterly split is supplied
+  (`other_sources.dividend_quarterly` / `interest_quarterly`), a **234C accrual/receipt grid** (item ×
+  Q1–Q5, with `Source`) is emitted so the OS 234C screen can be filled by credit date — dividend in row 3a.
 - **Deductions**: 80C/80D/80TTA/80TTB as applicable (regime-dependent).
 - **Regime comparison table**: OLD vs NEW, line by line, with the recommendation.
 - **Taxes paid / payable**: TDS, advance tax, self-assessment tax, 234B/234C note.

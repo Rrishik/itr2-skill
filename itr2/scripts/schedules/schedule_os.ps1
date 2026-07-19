@@ -33,3 +33,50 @@ $rows += [pscustomobject]@{ Field = 'Total income from other sources'; Value = [
 
 Show-Section 'Schedule OS — Other Sources' $rows
 if ($OutDir) { Merge-Return $OutDir 'other_sources' $rows | Out-Null }
+
+# --- OS 234C quarterly grid (Schedule OS accrual/receipt screen) ---
+# Advance-tax interest (234C) needs OS income split by the quarter it was
+# credited. Supply the split in tax_input.json under other_sources as any of:
+#   dividend_quarterly / interest_quarterly / other_quarterly
+# each an object keyed by q1..q5 (or Q1..Q5), e.g.:
+#   "dividend_quarterly": { "q1": 12000, "q2": 0, "q3": 30120, "q4": 20000, "q5": 0 }
+# Each item's quarterly split must sum to that item's annual total above.
+$qMap = [ordered]@{
+    q1 = 'Q1 (<=15-Jun)'; q2 = 'Q2 (16-Jun..15-Sep)'; q3 = 'Q3 (16-Sep..15-Dec)'
+    q4 = 'Q4 (16-Dec..15-Mar)'; q5 = 'Q5 (16-Mar..31-Mar)'
+}
+function Get-Quarterly($obj, $name) {
+    $q = Prop $obj $name
+    if ($null -eq $q) { return $null }
+    $out = [ordered]@{}
+    foreach ($k in $qMap.Keys) {
+        # accept q1/Q1 casing
+        $v = Prop $q $k; if ($null -eq $v) { $v = Prop $q ($k.ToUpper()) }
+        $out[$qMap[$k]] = Num $v
+    }
+    return $out
+}
+# item label, OS-screen row (Where), which annual figure it must reconcile to, source
+$osItems = @(
+    [pscustomobject]@{ Label = 'Dividend'; Key = 'dividend_quarterly'; Where = 'Schedule OS 234C: 3a Dividend income (Sl.no. 1a(i))'; Annual = $dividend; Source = 'Dividend report / AIS (credit dates)' }
+    [pscustomobject]@{ Label = 'Interest'; Key = 'interest_quarterly'; Where = 'Schedule OS 234C: interest income row'; Annual = $interestTotal; Source = 'Bank interest certificate / AIS (credit dates)' }
+    [pscustomobject]@{ Label = 'Other'; Key = 'other_quarterly'; Where = 'Schedule OS 234C: other income row'; Annual = $otherOs; Source = 'As applicable (see source doc)' }
+)
+$osSplit = @()
+foreach ($it in $osItems) {
+    $label = $it.Label; $qObj = Get-Quarterly $os $it.Key; $annual = Num $it.Annual
+    if ($null -eq $qObj) { continue }
+    $sum = ($qObj.Values | Measure-Object -Sum).Sum
+    if ($annual -gt 0 -and [math]::Abs($sum - $annual) -gt 1) {
+        Write-Host ("WARN: $label quarterly split ({0}) != annual total ({1})" -f [math]::Round($sum), [math]::Round($annual)) -ForegroundColor Yellow
+    }
+    foreach ($qk in $qMap.Keys) {
+        $lab = $qMap[$qk]; $amt = Num $qObj[$lab]
+        if ($amt -eq 0) { continue }
+        $osSplit += [pscustomobject]@{ Item = $label; Quarter = $lab; Amount = [math]::Round($amt); Source = $it.Source; Where = $it.Where }
+    }
+}
+if ($osSplit.Count -gt 0) {
+    Show-Section 'Schedule OS — 234C quarterly split' $osSplit
+    if ($OutDir) { Merge-Return $OutDir 'other_sources_234c' $osSplit | Out-Null }
+}

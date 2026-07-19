@@ -19,3 +19,21 @@ Section F has one row per **tax rate**, so map each computed head to its row bef
 `schedule_cg.ps1 -OutDir out` already emits the `capital_gains_234c` section (per head × quarter) from the
 tradewise CSV — use it as the starting point, drop each head into its Section F row above, and apply the
 loss-netting rule for any negative quarter.
+
+## OS 234C grid (dividend / interest by quarter)
+
+The Schedule OS "accrual/receipt of income" screen needs the **same quarterly split for dividends and
+interest**, by the date each amount was **credited** (from the dividend report / AIS / bank certificate).
+Dividend goes in **row 3a (Sl.no. 1a(i))**. Supply the split in `tax_input.json` under `other_sources`:
+
+```json
+"other_sources": {
+  "dividend": 62120,
+  "dividend_quarterly": { "q1": 12000, "q2": 0, "q3": 30120, "q4": 20000, "q5": 0 },
+  "interest_quarterly": { "q1": 0, "q2": 4641, "q3": 0, "q4": 4641, "q5": 0 }
+}
+```
+
+`schedule_os.ps1` renders these into a Row × Q1–Q5 grid (with a `Source` column) in the data-entry sheet.
+Each item's five quarters must sum to its annual total — `verify_input.ps1` FAILs if they don't. If you
+don't have credit dates, leave the split out and enter the annual figure in whichever quarter it accrued.

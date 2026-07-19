@@ -93,6 +93,27 @@ if (Has $in 'capital_gains_manual') {
 # 7. AY sanity.
 if ((Has $in 'ay') -and $in.ay -and $in.ay -notmatch '^\d{4}-\d{2}$') { Warn ("ay '{0}' is not in YYYY-YY form" -f $in.ay) }
 
+# 8. OS 234C quarterly splits (if supplied) must sum to their annual totals.
+if (Has $in 'other_sources') {
+    $os = $in.other_sources
+    $qKeys = @('q1', 'q2', 'q3', 'q4', 'q5')
+    $checks = @(
+        @('dividend_quarterly', (N (Prop $os 'dividend'))),
+        @('interest_quarterly', ((N (Prop $os 'savings_interest')) + (N (Prop $os 'fd_interest')) + (N (Prop $os 'interest')))),
+        @('other_quarterly', (N (Prop $os 'other')))
+    )
+    foreach ($c in $checks) {
+        $qObj = Prop $os $c[0]
+        if ($null -eq $qObj) { continue }
+        $sum = 0.0
+        foreach ($qk in $qKeys) { $v = Prop $qObj $qk; if ($null -eq $v) { $v = Prop $qObj ($qk.ToUpper()) }; $sum += N $v }
+        $annual = N $c[1]
+        if ([math]::Abs($sum - $annual) -gt 1) {
+            Fail ("{0} sums to {1:N0} but the annual total is {2:N0} - the 234C split must tie" -f $c[0], $sum, $annual)
+        } else { Pass ("{0} ties to its annual total ({1:N0})" -f $c[0], $annual) }
+    }
+}
+
 Write-Host ""
 if ($fails.Count -gt 0) {
     Write-Host ("VERIFY: {0} FAIL, {1} WARN - fix FAILs before running the pipeline." -f $fails.Count, $warns.Count) -ForegroundColor Red
