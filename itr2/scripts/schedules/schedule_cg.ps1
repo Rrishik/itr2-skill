@@ -34,11 +34,26 @@ param(
 if (-not $Path -and $InputJson) {
     $in = Get-Content (Resolve-Path $InputJson).Path -Raw | ConvertFrom-Json
     if ($in.PSObject.Properties.Name -contains 'tradewise_csv') { $Path = $in.tradewise_csv }
+} elseif ($InputJson) {
+    # Path given too: still load JSON so manual CG heads can be merged in.
+    $in = Get-Content (Resolve-Path $InputJson).Path -Raw | ConvertFrom-Json
 }
-if (-not $Path) { Write-Host "No tradewise CSV (Path/tradewise_csv); Schedule CG aggregation skipped." -ForegroundColor DarkGray; return }
 
-$full = (Resolve-Path $Path).Path
-$lines = [System.IO.File]::ReadAllLines($full)
+# Manual CG heads: gains not in a broker tradewise CSV (debt MF, foreign equity,
+# unlisted) supplied directly in tax_input.json as capital_gains_manual[]:
+#   { "head": "...", "consideration": N, "cost": N, "expenditure": N (opt),
+#     "where": "Schedule CG A5 (STCG slab)", "quarter": "Q2 (16-Jun..15-Sep)" (opt) }
+$manual = @()
+if ($in -and ($in.PSObject.Properties.Name -contains 'capital_gains_manual')) {
+    $manual = @($in.capital_gains_manual)
+}
+function MProp($obj, $name) { if ($obj -and ($obj.PSObject.Properties.Name -contains $name)) { return $obj.$name } else { return $null } }
+function MNum($v) { if ($null -eq $v) { return 0.0 } else { return [double]$v } }
+
+if (-not $Path -and $manual.Count -eq 0) { Write-Host "No tradewise CSV (Path/tradewise_csv) or capital_gains_manual; Schedule CG aggregation skipped." -ForegroundColor DarkGray; return }
+
+$lines = if ($Path) { [System.IO.File]::ReadAllLines((Resolve-Path $Path).Path) } else { @() }
+$full = if ($Path) { (Resolve-Path $Path).Path } else { '(manual entries only)' }
 
 # Column indices in the Zerodha tradewise layout (0-based).
 $COL = @{
@@ -148,6 +163,12 @@ foreach ($k in $agg.Keys) {
         ('{0:N2}' -f $a.Cons), ('{0:N2}' -f $a.Cost),
         ('{0:N2}' -f $a.Charges), ('{0:N2}' -f $a.Gain), ('{0:N2}' -f $a.STT))
 }
+foreach ($m in $manual) {
+    $mc = MNum (MProp $m 'consideration'); $mk = MNum (MProp $m 'cost'); $me = MNum (MProp $m 'expenditure')
+    Write-Host ($fmt -f (MProp $m 'head'), 1,
+        ('{0:N2}' -f $mc), ('{0:N2}' -f $mk),
+        ('{0:N2}' -f $me), ('{0:N2}' -f ($mc - $mk - $me)), ('{0:N2}' -f 0)) -ForegroundColor Gray
+}
 Write-Host ""
 Write-Host "* Expenditure = sell-side charges (brokerage/exchange/SEBI/GST/stamp/IPFT). STT is EXCLUDED." -ForegroundColor DarkGray
 
@@ -197,6 +218,17 @@ if ($OutDir) {
         }
     }
     $headPath = Join-Path $OutDir 'cg_head_aggregates.csv'
+    $headRows = @($headRows)
+    foreach ($m in $manual) {
+        $mc = MNum (MProp $m 'consideration'); $mk = MNum (MProp $m 'cost'); $me = MNum (MProp $m 'expenditure')
+        $headRows += [pscustomobject]@{
+            Head = (MProp $m 'head'); Rows = 1
+            Consideration = [math]::Round($mc, 2); Cost = [math]::Round($mk, 2)
+            Expenditure = [math]::Round($me, 2); Gain = [math]::Round($mc - $mk - $me, 2)
+            STT_Excluded = 0
+            Where = $(if (MProp $m 'where') { MProp $m 'where' } else { 'Schedule CG - classify by instrument' })
+        }
+    }
     $headRows | Export-Csv -Path $headPath -NoTypeInformation
 
     $splitRows = foreach ($k in $agg.Keys) {
@@ -208,6 +240,17 @@ if ($OutDir) {
             [pscustomobject]@{
                 Head = $k; Quarter = $_.Name
                 Consideration = [math]::Round($c.Sum, 2); Gain = [math]::Round($g.Sum, 2)
+            }
+        }
+    }
+    $splitRows = @($splitRows)
+    foreach ($m in $manual) {
+        $q = MProp $m 'quarter'
+        if ($q) {
+            $mc = MNum (MProp $m 'consideration'); $mk = MNum (MProp $m 'cost'); $me = MNum (MProp $m 'expenditure')
+            $splitRows += [pscustomobject]@{
+                Head = (MProp $m 'head'); Quarter = $q
+                Consideration = [math]::Round($mc, 2); Gain = [math]::Round($mc - $mk - $me, 2)
             }
         }
     }

@@ -71,6 +71,10 @@ computes the balance. Example:
   112a=listed-equity LTCG (gross, before the ₹1.25L exemption the script applies), 112=bonds/SGB/foreign LTCG.
 - `slab_rate_gains` = capital gains taxed at slab rate, not a special rate: specified debt MFs (s.50AA),
   foreign equity held <24m, unlisted-share STCG. They add to slab income (never to `other_sources`).
+- `capital_gains_manual` (optional) — CG heads **not** in a broker tradewise CSV (debt MF, foreign
+  equity, unlisted). `schedule_cg.ps1` appends each to the Schedule CG table. Each entry:
+  `{ "head": "...", "consideration": N, "cost": N, "expenditure": N (opt), "where": "Schedule CG A5 (STCG slab)", "quarter": "Q2 (16-Jun..15-Sep)" (opt) }`.
+  This makes the CG grid complete; the tax itself still comes from `slab_rate_gains`/`special_rate_gains`.
 - `deduction_80ccd2` (employer NPS) is allowed under **both** regimes; everything in `deductions_old`
   is OLD-regime only.
 - `salary_hra_exemption` (s.10(13A)) and `salary_professional_tax` (s.16(iii)) reduce **salary** under the

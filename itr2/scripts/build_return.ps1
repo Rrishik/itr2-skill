@@ -45,7 +45,7 @@ Write-Host "Using regime: $Regime" -ForegroundColor Cyan
 & "$scripts\schedules\schedule_os.ps1"  -InputJson $InputJson -OutDir $OutDir | Out-Null
 & "$scripts\schedules\schedule_via.ps1" -InputJson $InputJson -Regime $Regime -OutDir $OutDir | Out-Null
 & "$scripts\schedules\schedule_112a.ps1" -InputJson $InputJson -OutDir $OutDir | Out-Null
-if ($TradewiseCsv) { & "$scripts\schedules\schedule_cg.ps1" -Path $TradewiseCsv -OutDir $OutDir | Out-Null }
+if ($TradewiseCsv) { & "$scripts\schedules\schedule_cg.ps1" -Path $TradewiseCsv -InputJson $InputJson -OutDir $OutDir | Out-Null }
 else { & "$scripts\schedules\schedule_cg.ps1" -InputJson $InputJson -OutDir $OutDir | Out-Null }
 
 # 3. Stitch the CSVs into one MD.

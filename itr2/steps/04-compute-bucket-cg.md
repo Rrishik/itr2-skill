@@ -26,6 +26,9 @@ Full rules in [../references/schedule-mapping.md](../references/schedule-mapping
 - **Slab-rate CG** (specified debt MF s.50AA, foreign equity held <24m, unlisted STCG) goes into
   `tax_input.json` as `slab_rate_gains` — never fold it into `other_sources`; `compute_tax.ps1` adds it
   to slab income as its own line so the Schedule OS totals stay clean.
+- Slab-rate/foreign/unlisted gains usually aren't in the broker tradewise CSV. To still show them in
+  the Schedule CG data-entry table, add a `capital_gains_manual` array to `tax_input.json`
+  (`{head, consideration, cost, expenditure?, where, quarter?}`); `schedule_cg.ps1` appends each row.
 - For a Zerodha-style broker tax-P&L, aggregate the heads deterministically with
   [../scripts/schedules/schedule_cg.ps1](../scripts/schedules/schedule_cg.ps1): export the "Tradewise
   Exits" sheet to CSV, then `schedule_cg.ps1 -Path <csv> -OutDir out` writes per-head
