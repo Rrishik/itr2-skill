@@ -101,15 +101,23 @@ The utility makes you split each capital-gains head across the **five 234C perio
 | **4 (Q4)** | 16-Dec to 15-Mar |
 | **5 (Q5)** | 16-Mar to 31-Mar |
 
-Rows in Section F (fill only those with gains):
-| Row | Head |
-|---|---|
-| 1 | STCG taxable @15%/20% (111A) |
-| 2 | STCG @ DTAA rates |
-| 3 | STCG taxable at applicable/slab rate (debt MF, other) |
-| 4 | LTCG taxable @10%/12.5% (112A) |
-| 5 | LTCG taxable @20% |
-| 6 | LTCG @ DTAA rates |
+Section F rows (the utility labels each "Enter value from item 3… of schedule BFLA"). Fill only the rows
+that have gains, and map each of **our computed heads** to its row:
+
+| Row | Utility label | Which of our heads goes here |
+|---|---|---|
+| 1 | STCG taxable @ **20%** (from 3iii BFLA) | Equity STCG 111A (`stcg_111a` / CG head A2) |
+| 2 | STCG taxable @ **30%** (from 3iv) | usually **0** (e.g. non-resident unlisted); leave blank if none |
+| 3 | STCG taxable at **applicable/slab rate** (from 3v) | slab-rate STCG: debt MF (s.50AA), foreign equity <24m, unlisted — i.e. `slab_rate_gains` / `capital_gains_manual` (CG head A5) |
+| 4 | STCG at **DTAA** rates (from 3vi) | only if claiming treaty relief on STCG; else 0 |
+| 5 | LTCG taxable @ **12.5%** (from 3vii) | LTCG 112A (`ltcg_112a`, equity over ₹1.25L) **and** LTCG 112 (`ltcg_112`: SGB/bonds/foreign) — both are 12.5% now |
+| 6 | LTCG at **DTAA** rates (from 3viii) | only if claiming treaty relief on LTCG; else 0 |
+| 7 | VDA (crypto) @ **30%** (from item 16 of SI) | virtual digital assets, if any; else 0 |
+
+To fill a row, take that head's per-quarter figures from `capital_gains_234c` (our `schedule_cg.ps1`
+output groups by head × quarter) and enter them across columns 1–5. Example from our output — Equity STCG
+111A ₹1,650 all in Q2 → **Row 1**: col 2 = 1650, rest 0. Debt-MF + foreign STCG (slab) → **Row 3**, split
+by their quarters. SGB LTCG ₹34,972 in Q3 → **Row 5**: col 3 = 34972.
 
 - Each row **must sum to that head's annual gain** in Schedule CG, else the utility errors.
 - The grid **rejects negatives**: if a quarter is a net loss, net it into a later positive quarter so the

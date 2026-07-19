@@ -231,6 +231,18 @@ if ($OutDir) {
     }
     Merge-Return $OutDir 'capital_gains_head' $headRows | Out-Null
 
+    # Map a head (built-in section name, or a manual entry's 'where') to its
+    # Schedule CG Section F quarterly-grid row (by tax rate).
+    function SectionF-Row($label) {
+        switch -Regex ($label) {
+            'Short Term|A2|111A'        { 'Row 1 (STCG @20%)'; break }
+            'A5|slab|debt|Foreign|<24m' { 'Row 3 (STCG applicable rate)'; break }
+            'Long Term|112A|A8|B3'      { 'Row 5 (LTCG @12.5%)'; break }
+            'Non-equity|B2|SGB|112'     { 'Row 5 (LTCG @12.5%)'; break }
+            default                     { 'classify by rate (see schedule-mapping Section F)' }
+        }
+    }
+
     $splitRows = foreach ($k in $agg.Keys) {
         $hr = $withDates | Where-Object { $_.Section -eq $k }
         if (-not $hr) { continue }
@@ -240,6 +252,7 @@ if ($OutDir) {
             [pscustomobject]@{
                 Head = $k; Quarter = $_.Name
                 Consideration = [math]::Round($c.Sum, 2); Gain = [math]::Round($g.Sum, 2)
+                SectionF = SectionF-Row $k
             }
         }
     }
@@ -251,6 +264,7 @@ if ($OutDir) {
             $splitRows += [pscustomobject]@{
                 Head = (MProp $m 'head'); Quarter = $q
                 Consideration = [math]::Round($mc, 2); Gain = [math]::Round($mc - $mk - $me, 2)
+                SectionF = SectionF-Row ("$(MProp $m 'head') $(MProp $m 'where')")
             }
         }
     }
