@@ -65,7 +65,27 @@ function Rows-ToMdTable($rows) {
     return $sb.ToString()
 }
 
-# Record filing meta in the same return.json.
+# Pivot the capital_gains_234c rows into the utility's Section F grid:
+# one row per Section F rate-row, one column per 234C quarter (Q1..Q5).
+function SectionF-Grid($rows) {
+    $rows = @($rows)
+    if (-not $rows -or $rows.Count -eq 0) { return $null }
+    $qCols = @('Q1 (<=15-Jun)', 'Q2 (16-Jun..15-Sep)', 'Q3 (16-Sep..15-Dec)', 'Q4 (16-Dec..15-Mar)', 'Q5 (16-Mar..31-Mar)')
+    # Group by Section F row (sorted by the leading "Row N").
+    $bySF = $rows | Group-Object SectionF | Sort-Object { $m = [regex]::Match($_.Name, '\d+'); if ($m.Success) { [int]$m.Value } else { 99 } }
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.AppendLine('| Section F row | ' + ($qCols -join ' | ') + ' | Total |')
+    [void]$sb.AppendLine('|' + ('---|' * ($qCols.Count + 2)))
+    foreach ($grp in $bySF) {
+        $cells = foreach ($q in $qCols) {
+            $sum = ($grp.Group | Where-Object { $_.Quarter -eq $q } | Measure-Object -Property Gain -Sum).Sum
+            if ($sum) { [math]::Round($sum) } else { 0 }
+        }
+        $total = ($grp.Group | Measure-Object -Property Gain -Sum).Sum
+        [void]$sb.AppendLine('| ' + $grp.Name + ' | ' + ($cells -join ' | ') + ' | ' + [math]::Round($total) + ' |')
+    }
+    return $sb.ToString()
+}
 . "$scripts\schedules\_common.ps1"
 function PropOr($obj, $name, $default) { if ($obj.PSObject.Properties.Name -contains $name) { return $obj.$name } else { return $default } }
 $pan = PropOr $in 'pan' ''
@@ -101,6 +121,17 @@ foreach ($s in $sections) {
     [void]$md.AppendLine("## $($s[0])")
     [void]$md.AppendLine("")
     [void]$md.AppendLine($tbl)
+    # For the 234C split, also emit the utility's Section F grid (rows x quarters).
+    if ($s[1] -eq 'capital_gains_234c') {
+        $grid = SectionF-Grid $doc.($s[1])
+        if ($grid) {
+            [void]$md.AppendLine("### Schedule CG Section F — as the utility grid (enter these cells)")
+            [void]$md.AppendLine("")
+            [void]$md.AppendLine($grid)
+            [void]$md.AppendLine("_Each row must sum to that head's annual gain; the utility rejects negatives (net a loss-quarter into a later positive one)._")
+            [void]$md.AppendLine("")
+        }
+    }
 }
 [void]$md.AppendLine("---")
 [void]$md.AppendLine("_Verify all figures against AIS/TIS and the utility before filing. Rates are AY-specific._")

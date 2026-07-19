@@ -30,6 +30,18 @@ A schedule-by-schedule sheet showing each figure and how it was derived, with ca
   step for this income mix (see [schedule-mapping.md](./schedule-mapping.md#which-schedules-to-select-in-the-utility)).
 - **Schedule S** (salary/pension): gross, exemptions, standard deduction, chargeable.
 - **Schedule CG**: STCG 111A, STCG slab, LTCG 112A (gross and taxable-after-1.25L), total CG.
+- **Schedule CG Section F** (234C quarterly grid): the `capital_gains_234c` rows are also rendered as the
+  utility's grid — one row per Section F rate-row, columns Q1–Q5 — so the sheet mirrors the input screen:
+
+  | Section F row | Q1 (≤15-Jun) | Q2 (16-Jun–15-Sep) | Q3 (16-Sep–15-Dec) | Q4 (16-Dec–15-Mar) | Q5 (16-Mar–31-Mar) | Total |
+  |---|---|---|---|---|---|---|
+  | Row 1 (STCG @20%, 111A) | 0 | … | 0 | 0 | 0 | = annual 111A gain |
+  | Row 3 (STCG applicable rate) | … | … | … | … | … | = annual slab CG |
+  | Row 5 (LTCG @12.5%) | … | … | … | … | … | = annual 112A+112 |
+
+  Only rows with gains appear. Each row must sum to that head's annual gain; the utility rejects negatives
+  (net a loss-quarter into a later positive one). Full row→rate map in
+  [schedule-mapping.md](./schedule-mapping.md#quarterly-breakup--schedule-cg-section-f-and-os-234c-grid).
 - **Schedule OS**: dividends, interest — reconciled to AIS.
 - **Deductions**: 80C/80D/80TTA/80TTB as applicable (regime-dependent).
 - **Regime comparison table**: OLD vs NEW, line by line, with the recommendation.
