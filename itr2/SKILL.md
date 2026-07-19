@@ -30,6 +30,7 @@ Ask the user to provide (whatever applies). Note which are missing and proceed w
 | Bank interest certificate / passbook | Savings + FD interest (Schedule OS) |
 | Pension certificate | Pension (taxed under Salaries) |
 | Foreign broker statement (ESPP/RSU/foreign stocks) | Foreign capital gains, holdings for Schedule FA |
+| Foreign broker **open/closed lots** report (cost-basis / gain-loss detail) | Exact **acquisition (vest) date** and per-lot cost basis — needed for the 24-month holding test |
 | ESPP/RSU vesting or purchase report | Perquisite value (salary) + cost basis for later sale |
 | Foreign dividend statement / 1042-S | Foreign dividends (Schedule OS) + tax withheld (FTC) |
 | Form 67 / foreign tax-paid proof | Foreign Tax Credit under DTAA |
@@ -59,8 +60,10 @@ and *why* to the user, and flag if a disqualifier (e.g. intraday) forces a form 
 ## Step 3 — Read the documents
 - Broker reports are often `.xlsx` **with the extension stripped** — check magic bytes (`50 4B` = xlsx/zip).
 - Read xlsx without Excel/Python using [read_xlsx.ps1](./scripts/read_xlsx.ps1) (extracts sharedStrings + sheet rows).
-- **AIS PDFs are password-protected**: password = PAN in lowercase + DOB as `DDMMYYYY`
-  (e.g. `abcde1234f01011980`). Extract with `pdftotext -layout -upw "<pwd>" in.pdf out.txt`.
+- **Password-protected PDFs** — each source uses its own scheme, so try them per-source:
+  AIS/TIS/26AS = PAN-lowercase + DOB `DDMMYYYY` (e.g. `abcde1234f01011980`); Form 16 is often
+  PAN-uppercase only; CAS/CAMS/broker statements may use a user-set password. Extract with
+  `pdftotext -layout -upw "<pwd>" in.pdf out.txt`.
 
 ## Step 4 — Compute and bucket the gains
 See [references/schedule-mapping.md](./references/schedule-mapping.md) for the full rules. Summary:
@@ -70,18 +73,27 @@ See [references/schedule-mapping.md](./references/schedule-mapping.md) for the f
 | Listed equity/equity-MF STCG (STT paid) | 111A | 20%* | Schedule CG → STCG item 2 |
 | Other STCG (debt MF, unlisted, etc.) | slab | slab | Schedule CG → STCG item 5 |
 | Listed equity/equity-MF LTCG (STT paid) | 112A | 12.5%* (first ₹1.25L exempt) | Schedule CG → LTCG item 3 |
+| Listed bonds / SGB / ZCB LTCG (non-STT) | 112 | 12.5% no indexation, **no ₹1.25L exempt** | Schedule CG → LTCG item 2 |
 | Dividends, interest | — | slab | Schedule OS |
 
 *Post-23-Jul-2024 rates. Sales before that date use old rates — split if any exist.
 
 - **Foreign stocks / ESPP / RSU** on sale = capital gains but **NOT** 111A/112A (no STT): >24 months
-  held → LTCG at 12.5% (no ₹1.25L exemption); ≤24 months → STCG at slab. Report in Schedule CG under
-  the non-STT rows. The ESPP discount / RSU vesting value is a **salary perquisite** — confirm it's in
-  Form 16/12BA; if the employer is foreign it usually isn't, and must be added to salary manually.
-- **Foreign dividends** → Schedule OS at slab; foreign tax withheld (e.g. US 25%) is claimable as
-  **FTC via Form 67**, which must be filed before the return. A resident's global income is taxable.
+  held → LTCG at 12.5% (**no ₹1.25L exemption** — that shield is 112A-only; foreign LTCG is **s.112**);
+  ≤24 months → STCG at slab. Holding period runs from the **vest date, not the grant date**; confirm it
+  and the per-lot cost from the broker's **closed-lots report** — the US LONG/SHORT tag ≠ India's
+  24-month test. The ESPP/RSU vesting value is a **salary perquisite**; if the employer is foreign it's
+  usually missing from Form 16 and must be added to salary manually.
+- **Currency conversion (Rule 115/128):** SBI TT buying rate on the relevant date (transaction date for a
+  sale/purchase; last day of the *preceding* month for income/foreign-tax); holiday → prior working day.
+  Use the **RBI reference-rate archive** as the citable proxy and log every rate.
+- **Foreign dividends** → Schedule OS at slab (gross); foreign tax withheld → **FTC via Form 67** (file
+  *before* the return). For **US dividends the India–US DTAA rate is 25% for individuals** (15% is
+  company-≥10%-voting-stock only) and fully creditable. A resident's global income is taxable.
 - **Schedule FA** — list every foreign asset held any time in the calendar year (not FY): shares, ESPP/RSU
   (including unvested per the relevant table), and foreign accounts. Mandatory for Resident & Ordinarily Resident.
+- Full foreign rules (holding test, Rule 115/128, DTAA rates, 1042-S CY-vs-FY timing) in
+  [references/schedule-mapping.md](./references/schedule-mapping.md#foreign-stocks--espp--rsu--foreign-dividends).
 - **Intraday** equity = **speculative business income** → strictly ITR-3, not ITR-2. Flag it explicitly.
 - **Charges** (brokerage, exchange, SEBI, stamp duty, GST, IPFT) are deductible u/s 48 as
   "expenditure in connection with transfer". **STT is NOT deductible.**
@@ -117,3 +129,13 @@ Compute tax under OLD and NEW and recommend the lower. Produce a data-entry shee
   minus signs from loss-making lots.
 - 80TTA (non-senior) vs 80TTB (senior, ₹50k) for interest.
 - Grandfathering (31-Jan-2018 NAV) applies only to `BE` lots.
+- **Listed bonds / SGB / ZCB are s.112, not 112A** — 12.5% with no indexation and no ₹1.25L exemption
+  (LTCG item 2). AIS often **mislabels** them as "listed debenture/securities"; classify by instrument.
+- **The employer's regime choice doesn't bind the return** — Form 16 may deduct TDS under old regime
+  (opted out of 115BAC), but always recompute both regimes fresh and pick the lower for the filing.
+- **Foreign LTCG (s.112) gets no ₹1.25L exemption** — that shield is 112A (listed Indian equity) only.
+- **US dividend DTAA rate is 25% for individuals** (15% is company-≥10%-voting-stock only), fully creditable.
+- Broker legacy `.xls` files may be **OLE (magic `D0 CF 11 E0`)**, not ZIP `.xlsx` — read_xlsx.ps1 only
+  handles ZIP-based xlsx; use another reader (e.g. Excel COM) for OLE.
+- **Foreign dividend timing:** 1042-S is by US *calendar year*, but India taxes by *FY receipt date* —
+  Jan–Mar dividends belong to the Indian FY even before that year's 1042-S is issued.

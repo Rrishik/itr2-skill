@@ -3,12 +3,12 @@
 A portable [Agent Skill](https://code.visualstudio.com/docs/copilot/copilot-customization) that
 computes Indian **ITR-2** capital gains and other-source income from your broker / AIS documents,
 builds the **Schedule 112A** upload CSV, and maps every value to the right box in the Income-Tax
-offline utility. Covers STCG/LTCG (111A/112A/slab), dividends & interest, foreign stocks/ESPP/RSU
-(Schedule FA, FTC), AIS/TIS reconciliation, the 234C quarterly grid, OLD vs NEW regime, and
-ITR-1/2/3/4 form selection.
+offline utility. Covers STCG/LTCG (111A/112A/112/slab), dividends & interest, foreign stocks/ESPP/RSU
+(vest-date holding test, Rule 115/128 currency conversion, Schedule FA, DTAA FTC via Form 67),
+AIS/TIS reconciliation, the 234C quarterly grid, OLD vs NEW regime, and ITR-1/2/3/4 form selection.
 
 > **Not tax advice.** A computation aid — verify every figure against the official utility and your
-> source documents before filing. Rates reflect FY2024-25 / AY2025-26 (post-23-Jul-2024).
+> source documents before filing. Rates reflect FY2025-26 / AY2026-27 (post-23-Jul-2024).
 
 ## Install
 

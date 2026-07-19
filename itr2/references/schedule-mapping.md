@@ -44,11 +44,24 @@ If any disposal occurred **before 23-Jul-2024**, split into pre/post buckets (ol
 - **Sale of foreign shares** = capital gains but NOT 111A/112A (no STT). Holding >24 months → LTCG u/s
   112(1) at 12.5% (no ₹1.25L exemption, no grandfathering) → LTCG item 8 ("assets where B1–B7 N/A").
   ≤24 months → STCG at slab → STCG item 5. Convert cost/sale using SBI TT buying rate on the relevant dates.
+  - **Holding period runs from the vest date, not the grant/award date.** Confirm the exact acquisition
+    date and per-lot cost basis from the broker's **closed-lots / gain-loss report**; a lot near the
+    24-month boundary can flip STCG↔LTCG. The broker's US **LONG/SHORT** tag is a US >12-month concept
+    and does not map to India's 24-month test — ignore it.
+- **Currency conversion (Rule 115 / 128):** transaction date for a sale/purchase; **last day of the month
+  preceding** receipt (income, Rule 115) or deduction (foreign tax, Rule 128); holiday → preceding working
+  day. Use the **SBI TT buying rate**; SBI doesn't publish historical TTBR openly, so the **RBI
+  reference-rate archive** is the standard citable proxy (RBI mid ≈ 0.5–1% above TTBR). Log each rate+date.
 - **ESPP discount / RSU vesting** = salary perquisite. If via an Indian employer it's usually in
   Form 16/12BA; a foreign employer often omits it — add to salary manually. That perquisite value
   becomes the cost basis for the later sale.
 - **Foreign dividends** → Schedule OS at slab (gross, before foreign withholding). Foreign tax withheld
-  (e.g. US 25%) → claim **FTC** in Schedule TR/FSI; **Form 67 must be filed before the return**.
+  → claim **FTC** in Schedule TR/FSI; **Form 67 must be filed before the return**. FTC = lower of Indian
+  tax on that income and foreign tax paid, capped at the **DTAA treaty rate**. **India–US DTAA Art. 10(2):**
+  dividend treaty rate is **15% only for a *company* owning ≥10% voting stock; 25% in all other cases** —
+  so for an individual/portfolio investor 25% is the treaty rate and fully creditable (a valid W-8BEN
+  still gives 25%; nothing to reclaim as "excess"). 1042-S is by US **calendar year**, but India taxes by
+  **FY receipt date** — Jan–Mar dividends belong to the Indian FY even before that year's 1042-S issues.
 - **Schedule FA** — mandatory for Resident & Ordinarily Resident holding any foreign asset at any time in
   the **calendar** year (shares, ESPP/RSU incl. unvested, foreign accounts), even if unsold and even if
   income is nil. Report in the appropriate table (A3 foreign equity/debt, etc.).
