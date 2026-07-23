@@ -154,6 +154,23 @@ class CoreTests(unittest.TestCase):
             any("dividend_quarterly is required" in item for item in report.failures)
         )
 
+    def test_validation_rejects_contradictory_document_status(self) -> None:
+        data = self.base_input()
+        data["foreign_assets_held"] = False
+        data["document_checklist"] = {
+            "ais_tis": {"status": "not_applicable"},
+            "form_26as": {
+                "status": "reviewed",
+                "reference": "Synthetic Form 26AS",
+            },
+        }
+        with tempfile.TemporaryDirectory() as temp:
+            report = validate(data, Path(temp) / "tax_input.json")
+        self.assertFalse(report.ok)
+        self.assertTrue(
+            any("cannot be not_applicable" in item for item in report.failures)
+        )
+
     def test_foreign_sources_lower_of_and_form67(self) -> None:
         data = self.base_input()
         data["residential_status"] = "resident_and_ordinarily_resident"

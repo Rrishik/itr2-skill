@@ -7,6 +7,7 @@ from pathlib import Path
 
 from itr2lib.capital_gains import build_capital_gains
 from itr2lib.common import InputError, load_json, write_json, write_text
+from itr2lib.documents import assess_document_checklist
 from itr2lib.fsi import build_fsi
 from itr2lib.renderer import render
 from itr2lib.schedule_112a import OUTPUT_NAME, build_schedule_112a
@@ -42,6 +43,7 @@ def build(
     result: dict = {
         "tax_computation": tax_rows,
         "recommended_regime": recommendation,
+        "document_readiness": assess_document_checklist(data).as_dict(),
     }
 
     salary_rows = salary(data, regime)

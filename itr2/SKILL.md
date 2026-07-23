@@ -14,7 +14,7 @@ Build the final return working set from immutable, reviewed contributions. Keep 
 Use a companion source skill first when the user has raw broker data:
 
 - Indian listed shares or equity mutual funds: use `indian-listed-equity`.
-- Foreign shares, ESPP, RSU, dividends, Schedule FA, and foreign-currency conversion: use `foreign-equity`.
+- Foreign shares, ESPP, RSU, dividends, Schedule FA, and foreign-currency conversion: use `foreign-equity`, then hand off its reviewed figures using the [foreign-source contribution contract](references/output-template.md#foreign-source-contribution).
 
 This skill accepts the reviewed outputs of those skills. It must not reproduce their lot matching, grandfathering, fair-market-value, exchange-rate, or FA CSV logic.
 
@@ -22,7 +22,13 @@ Stop and route to ITR-3 for intraday, F&O, or other business/professional income
 
 ## Workflow
 
-1. Confirm AY 2026-27, individual taxpayer, and ITR-2 eligibility.
+1. Confirm the filing context and source documents before calculating anything:
+   - Confirm AY 2026-27, individual taxpayer, ITR-2 eligibility, residential status, and the income mix.
+   - Always ask whether the taxpayer held foreign shares, ESPP/RSU, bank/broker accounts, or any other foreign asset during the relevant calendar year, including assets with no sale or income.
+   - Read the canonical requirements in `scripts/itr2lib/documents.py`, derive the applicable documents from the income mix, and inventory what the user already supplied.
+   - When the user points to a working folder, list its files and match obvious documents by filename and type. Do not read every file before deciding what is missing, and do not treat filename matching as review.
+   - Ask one grouped question for only the applicable documents that are missing. Let the user identify unavailable documents; do not invent evidence or repeatedly request the same item.
+   - Record the foreign-asset answer in `foreign_assets_held` and each document answer in `document_checklist` as `missing`, `provided`, `reviewed`, or `not_applicable`. Missing documents may remain in a draft, but must be disclosed as not filing-ready.
 2. Preserve all source documents. Create or update a separate `tax_input.json`; never modify source statements.
 3. Enter reviewed annual and quarterly contributions using the contract in [references/output-template.md](references/output-template.md).
 4. For each section 90/91 FSI item, obtain explicit Indian tax on that income, foreign tax paid, relief claimed, and Form 67 status. Section 90 also requires the reviewed DTAA tax limit.
@@ -45,6 +51,9 @@ Stop and route to ITR-3 for intraday, F&O, or other business/professional income
 
 ## Input rules
 
+- `document_checklist` records taxpayer-specific intake state. The canonical document names and applicability rules live only in `scripts/itr2lib/documents.py`.
+- A missing checklist makes document readiness `unknown`. Missing or merely provided applicable documents make it `not_ready`; only reviewed applicable documents make it `ready`.
+- Never treat a filename or declared status as proof that the underlying figures are correct. Reconcile the contents before marking a document reviewed.
 - `capital_gains_manual[]` means reviewed schedule contributions, not arbitrary overrides.
 - Every capital-gain entry needs `tax_bucket`, consideration, cost, expenditure if any, and its utility destination.
 - Annual capital-gain fields must tie to the sum of contributions.
@@ -63,4 +72,4 @@ The build produces:
 - `ITR2_data_entry.md`
 - optional `Schedule112A.csv`
 
-Treat them as working papers, not a filed return. Never silently correct or overwrite `tax_input.json`.
+Both standard outputs include source-document readiness. Treat them as working papers, not a filed return. Never silently correct or overwrite `tax_input.json`.

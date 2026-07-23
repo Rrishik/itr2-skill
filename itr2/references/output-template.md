@@ -9,6 +9,7 @@ Use a fresh JSON file for AY 2026-27. Values are rupees. Preserve source stateme
   "ay": "2026-27",
   "residential_status": "resident_and_ordinarily_resident",
   "senior_citizen": false,
+  "foreign_assets_held": false,
   "salary_gross": 0,
   "salary_hra_exemption": 0,
   "salary_professional_tax": 0,
@@ -41,11 +42,50 @@ Use a fresh JSON file for AY 2026-27. Values are rupees. Preserve source stateme
     "self_assessment_tax": 0,
     "ftc": 0
   },
-  "foreign_sources": []
+  "foreign_sources": [],
+  "document_checklist": {
+    "ais_tis": {
+      "status": "reviewed",
+      "reference": "AIS and TIS downloaded for FY 2025-26"
+    },
+    "form_26as": {
+      "status": "reviewed",
+      "reference": "Form 26AS downloaded for FY 2025-26"
+    }
+  }
 }
 ```
 
 Omit optional empty blocks. Unknown top-level and nested keys fail validation.
+
+## Source-document checklist
+
+The canonical document IDs, display names, and applicability rules are maintained in [the document registry](../scripts/itr2lib/documents.py). Do not duplicate or redefine that catalog in `tax_input.json`; record only the taxpayer-specific state:
+
+```json
+{
+  "document_checklist": {
+    "salary_evidence": {
+      "status": "provided",
+      "reference": "Form 16 FY 2025-26",
+      "note": "Awaiting reconciliation to Form 26AS"
+    },
+    "capital_gains_working": {
+      "status": "missing",
+      "note": "Broker report requested"
+    }
+  }
+}
+```
+
+Allowed statuses:
+
+- `missing`: applicable evidence is unavailable.
+- `provided`: evidence is available but its figures have not been reviewed.
+- `reviewed`: evidence has been checked and reconciled for the working return.
+- `not_applicable`: the document does not apply. Validation rejects this status when the tax input makes the document applicable.
+
+`reference` and `note` are descriptive text only. The assembler does not open, trust, or modify a referenced source file. The derived checklist and its declarations are copied to `return.json.document_readiness` as an audit trail. An absent checklist produces `unknown` readiness. A present checklist is `ready` only when every applicable requirement is `reviewed`; missing and provided documents remain warnings so a clearly marked draft can still be built.
 
 ## House property
 

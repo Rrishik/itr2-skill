@@ -3,10 +3,12 @@
 A portable agent skill that validates reviewed AY 2026-27 ITR-2 contributions and creates a single return working set:
 
 - `return.json` — structured schedule and tax-comparison rows.
-- `ITR2_data_entry.md` — a schedule-by-schedule utility entry sheet.
+- `ITR2_data_entry.md` — a schedule-by-schedule utility entry sheet with source-document readiness.
 - `Schedule112A.csv` — optional strict utility CSV using the downloaded template header.
 
 The assembler does not parse broker statements or compute source-level Indian or foreign equity. Those calculations belong in the companion `indian-listed-equity` and `foreign-equity` skills. Copy only their reviewed filing contributions into the immutable `tax_input.json` contract.
+
+The skill begins by confirming the applicable source documents. A canonical registry derives the requirements from the income mix, while `tax_input.json` records whether each document is missing, provided, or reviewed. Incomplete evidence remains buildable as a visibly not-ready working draft.
 
 > **Not tax advice.** Verify every figure against source documents, AIS/TIS, Form 26AS, and the official utility before filing. Rates are fixed to FY 2025-26 / AY 2026-27.
 
@@ -48,6 +50,7 @@ Legacy binary `.xls` files are rejected with a request to re-export as `.xlsx` o
 ## Design boundaries
 
 - `tax_input.json` is read-only and never rewritten.
+- Source-document readiness is declared and reviewed metadata; it is not proof that a referenced document or figure is correct.
 - Source calculations and Schedule FA A2/A3 CSVs stay in the companion source skills.
 - FSI/TR rows use explicit reviewed income, tax, DTAA cap, relief, and Form 67 status. The assembler validates the lower-of limits; it does not estimate them.
 - Intraday, F&O, and business income require ITR-3 and are out of scope.

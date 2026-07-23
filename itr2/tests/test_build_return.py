@@ -22,6 +22,7 @@ class BuildReturnTests(unittest.TestCase):
             "ay": "2026-27",
             "residential_status": "resident_and_ordinarily_resident",
             "senior_citizen": False,
+            "foreign_assets_held": True,
             "salary_gross": 1_500_000,
             "salary_hra_exemption": 0,
             "salary_professional_tax": 0,
@@ -73,6 +74,40 @@ class BuildReturnTests(unittest.TestCase):
                     "source": "Synthetic certificate",
                 }
             ],
+            "document_checklist": {
+                "ais_tis": {
+                    "status": "reviewed",
+                    "reference": "Synthetic AIS and TIS",
+                },
+                "form_26as": {
+                    "status": "reviewed",
+                    "reference": "Synthetic Form 26AS",
+                },
+                "salary_evidence": {
+                    "status": "reviewed",
+                    "reference": "Synthetic Form 16",
+                },
+                "dividend_evidence": {
+                    "status": "reviewed",
+                    "reference": "Synthetic dividend statement",
+                },
+                "interest_evidence": {
+                    "status": "reviewed",
+                    "reference": "Synthetic bank certificate",
+                },
+                "foreign_asset_inventory": {
+                    "status": "reviewed",
+                    "reference": "Synthetic Schedule FA working",
+                },
+                "foreign_source_working": {
+                    "status": "reviewed",
+                    "reference": "Synthetic foreign-source working",
+                },
+                "foreign_tax_proof": {
+                    "status": "reviewed",
+                    "reference": "Synthetic tax-paid proof",
+                },
+            },
         }
 
     def test_one_pass_idempotent_build_does_not_mutate_input(self) -> None:
@@ -99,6 +134,8 @@ class BuildReturnTests(unittest.TestCase):
             self.assertFalse(stale.exists())
 
         self.assertEqual(result, second)
+        self.assertEqual(result["document_readiness"]["status"], "ready")
+        self.assertEqual(result["document_readiness"]["missing"], [])
         self.assertIn("foreign_source_income", result)
         self.assertIn("tax_relief", result)
         self.assertEqual(
@@ -111,6 +148,8 @@ class BuildReturnTests(unittest.TestCase):
         self.assertIn("## Schedule FSI — Foreign Source Income", markdown)
         self.assertIn("## Schedule TR — Tax Relief", markdown)
         self.assertIn("### 234C accrual/receipt grid", markdown)
+        self.assertIn("## Source-document readiness", markdown)
+        self.assertIn("Status: **READY**", markdown)
 
     def test_public_cli_smoke(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -153,6 +192,26 @@ class BuildReturnTests(unittest.TestCase):
             self.assertEqual(build_result.returncode, 0, build_result.stderr)
             self.assertTrue((out / "return.json").is_file())
             self.assertTrue((out / "ITR2_data_entry.md").is_file())
+
+    def test_missing_document_builds_visible_not_ready_draft(self) -> None:
+        data = self.input_data()
+        data["document_checklist"]["ais_tis"] = {
+            "status": "missing",
+            "note": "Not downloaded",
+        }
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            input_path = root / "tax_input.json"
+            input_path.write_text(json.dumps(data) + "\n", encoding="utf-8")
+            out = root / "out"
+
+            result = build(input_path, out)
+
+            self.assertEqual(result["document_readiness"]["status"], "not_ready")
+            self.assertEqual(result["document_readiness"]["missing"], ["ais_tis"])
+            markdown = (out / "ITR2_data_entry.md").read_text(encoding="utf-8")
+            self.assertIn("Status: **NOT_READY**", markdown)
+            self.assertIn("not filing-ready", markdown)
 
 
 if __name__ == "__main__":

@@ -115,6 +115,50 @@ def _os_grid(rows: list[dict[str, Any]]) -> str | None:
     return "\n".join(lines)
 
 
+def _document_readiness(readiness: Any) -> list[str]:
+    if not isinstance(readiness, dict):
+        return []
+    status = str(readiness.get("status") or "unknown")
+    lines = [
+        "## Source-document readiness",
+        "",
+        f"- Status: **{status.upper()}**",
+        "",
+    ]
+    items = readiness.get("items")
+    if not isinstance(items, list) or not items:
+        lines.extend(
+            (
+                "No applicable document checklist was recorded.",
+                "",
+            )
+        )
+        return lines
+    rows = [
+        {
+            "Document": item.get("document", ""),
+            "Status": item.get("status", ""),
+            "Reference": item.get("reference", ""),
+            "Note": item.get("note", ""),
+            "Why required": item.get("reason", ""),
+        }
+        for item in items
+        if isinstance(item, dict)
+    ]
+    table = rows_to_table(rows)
+    if table:
+        lines.extend((table, ""))
+    if status != "ready":
+        lines.extend(
+            (
+                "_This working set is not filing-ready until every applicable "
+                "document is reviewed._",
+                "",
+            )
+        )
+    return lines
+
+
 def render(data: dict[str, Any], result: dict[str, Any], regime: str) -> str:
     recommendation = str(result.get("recommended_regime") or regime.upper())
     regime_note = (
@@ -131,6 +175,7 @@ def render(data: dict[str, Any], result: dict[str, Any], regime: str) -> str:
         f"- Regime: **{regime.upper()}** ({regime_note})",
         "",
     ]
+    lines.extend(_document_readiness(result.get("document_readiness")))
 
     sections = (
         ("##", "Schedule S — Salary", "salary"),

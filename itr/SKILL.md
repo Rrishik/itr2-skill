@@ -28,6 +28,7 @@ it's out of scope). Else **capital gains or foreign assets → ITR-2 (`itr2`)**.
 112A → ITR-1. State the chosen form **and why** before handing off.
 
 Once the form is decided, **invoke the form skill** (e.g. `itr2`) and let it drive the full workflow.
+The ITR-2 skill must begin by confirming its applicable source-document checklist before calculating or assembling figures.
 
 ## Shared work context
 

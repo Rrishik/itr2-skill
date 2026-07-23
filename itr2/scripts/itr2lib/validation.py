@@ -8,6 +8,7 @@ from typing import Any
 
 from .capital_gains import manual_bucket
 from .common import InputError, QUARTERS, array, number, obj, resolve_path
+from .documents import assess_document_checklist
 from .schedules import house_property_value
 
 KNOWN_TOP_LEVEL = {
@@ -16,6 +17,7 @@ KNOWN_TOP_LEVEL = {
     "ay",
     "residential_status",
     "senior_citizen",
+    "foreign_assets_held",
     "salary_gross",
     "salary_hra_exemption",
     "salary_professional_tax",
@@ -30,6 +32,7 @@ KNOWN_TOP_LEVEL = {
     "capital_gains_manual",
     "schedule_112a",
     "foreign_sources",
+    "document_checklist",
 }
 OS_KEYS = {
     "dividend",
@@ -516,5 +519,10 @@ def validate(data: dict[str, Any], input_path: Path) -> ValidationReport:
             report.fail("taxes_paid.ftc is claimed but foreign_sources is absent")
     except InputError as exc:
         report.fail(str(exc))
+
+    document_assessment = assess_document_checklist(data)
+    report.failures.extend(document_assessment.failures)
+    report.warnings.extend(document_assessment.warnings)
+    report.passes.extend(document_assessment.passes)
 
     return report
