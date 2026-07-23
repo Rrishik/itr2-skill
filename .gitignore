@@ -16,3 +16,7 @@ docs_*/
 Thumbs.db
 *.tmp
 .playwright-mcp/
+
+# Python build artifacts
+__pycache__/
+*.py[cod]

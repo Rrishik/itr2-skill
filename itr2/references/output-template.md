@@ -1,142 +1,178 @@
-# Output templates
+# `tax_input.json` contract
 
-The deliverables are driven by a single **`tax_input.json`** (one source of truth) and the scripts:
-`compute_tax.ps1` + the per-schedule emitters in `scripts/schedules/` each merge a section into a single
-**`return.json`**, and `build_return.ps1` renders that into the combined `ITR2_data_entry.md`. Mirror any
-existing project convention first.
+Use a fresh JSON file for AY 2026-27. Values are rupees. Preserve source statements separately; the build never rewrites this file.
 
-Keep inputs and outputs in separate folders in the working folder: **`sources/`** for every input (raw
-documents and anything derived from them, incl. `tax_input.json` and a broker sheet exported to CSV), and
-**`skill_output/`** for the regenerable outputs (`return.json`, `ITR2_data_entry.md`, `Schedule112A.csv`).
-The pieces:
-
-- **`tax_input.json`** — the machine-readable input (schema below).
-- **`return.json`** — the single structured output. Each emitter writes one section key: `tax_computation`,
-  `recommended_regime`, `salary`, `house_property`, `other_sources`, `other_sources_234c`, `deductions`,
-  `capital_gains_head`, `capital_gains_234c`, plus `meta`. Section rows carry a **`Where`** column naming the
-  exact utility field
-  the value goes into (e.g. `Schedule S: 4(a) standard deduction u/s 16(ia)`, `Schedule CG A2 (STCG 111A)`),
-  so the user knows precisely which box to populate. Income/deduction rows also carry a **`Source`** column
-  naming the document each figure came from (Form 16, dividend report/AIS, bank interest certificate, broker
-  tradewise CSV, `capital_gains_manual`, etc.) so a human can cross-verify each value against its source;
-  computed rows say `Computed`.
-- **`ITR2_data_entry.md`** — the combined data-entry sheet (rendered from `return.json`).
-- **`Schedule112A.csv`** — the uploadable 112A file, when there's 112A LTCG (`schedules/schedule_112a.ps1`).
-  This stays a CSV because the portal requires that exact format.
-
-## 1. Data-entry sheet (Markdown)
-A schedule-by-schedule sheet showing each figure and how it was derived, with caveats.
-`build_return.ps1` renders it from `return.json` with this heading skeleton (schedules are `##`,
-sub-sections under a schedule are `###`); a schedule/sub-section is omitted when it has no data:
-
-```
-# ITR-2 data-entry sheet
-- Taxpayer / PAN / AY / Regime
-## Schedule S — Salary
-## Schedule HP — House Property
-## Schedule CG — Capital Gains
-### Head aggregates
-### 234C quarterly split (by head)
-### Section F — as the utility grid (enter these cells)
-## Schedule OS — Other Sources
-### 234C accrual/receipt grid (enter these cells)
-## Schedule VI-A — Deductions
-## Part B-TI / TTI — Tax computation & regime comparison
-```
-
-Sections in detail:
-
-- **Header**: taxpayer, PAN, DOB/age (senior?), form, residential status, regime chosen, bottom line
-  (total tax / TDS / refund-or-payable).
-- **Part A — General**: AY, section (139(1)), regime opt-out, foreign-asset flag, ITR-form note.
-- **Schedule selection tick-list**: which schedules to add/remove in the utility's "Select Schedule"
-  step for this income mix (see [schedule-mapping.md](./schedule-mapping.md#which-schedules-to-select-in-the-utility)).
-- **Schedule S** (salary/pension): gross, exemptions, standard deduction, chargeable.
-- **Schedule CG** — grouped under one heading, with sub-sections: **Head aggregates** (STCG 111A, STCG
-  slab, LTCG 112A/112, total CG), **234C quarterly split (by head)**, and **Section F — the utility grid**:
-  the `capital_gains_234c` rows pivoted to one row per Section F rate-row, columns Q1–Q5, so the sheet
-  mirrors the input screen:
-
-  | Section F row | Q1 (≤15-Jun) | Q2 (16-Jun–15-Sep) | Q3 (16-Sep–15-Dec) | Q4 (16-Dec–15-Mar) | Q5 (16-Mar–31-Mar) | Total |
-  |---|---|---|---|---|---|---|
-  | Row 1 (STCG @20%, 111A) | 0 | … | 0 | 0 | 0 | = annual 111A gain |
-  | Row 3 (STCG applicable rate) | … | … | … | … | … | = annual slab CG |
-  | Row 5 (LTCG @12.5%) | … | … | … | … | … | = annual 112A+112 |
-
-  Only rows with gains appear. Each row must sum to that head's annual gain; the utility rejects negatives
-  (net a loss-quarter into a later positive one). Full row→rate map in
-  [schedule-mapping.md](./schedule-mapping.md#quarterly-breakup--schedule-cg-section-f-and-os-234c-grid).
-- **Schedule OS**: dividends, interest — reconciled to AIS. When a quarterly split is supplied
-  (`other_sources.dividend_quarterly` / `interest_quarterly`), a **234C accrual/receipt grid** (item ×
-  Q1–Q5, with `Source`) is emitted so the OS 234C screen can be filled by credit date — dividend in row 3a.
-- **Deductions**: 80C/80D/80TTA/80TTB as applicable (regime-dependent).
-- **Regime comparison table**: OLD vs NEW, line by line, with the recommendation.
-- **Taxes paid / payable**: TDS, advance tax, self-assessment tax, 234B/234C note.
-- **Pre-filing checklist**: pay SA tax, reconcile AIS, quarterly breakup, proofs, e-verify.
-
-Mark any USD/forex or estimated items clearly (e.g. `§`) so they can be refreshed.
-
-**Format for each CG sub-head:** show the source detail table, then a plain **field → value** table of
-the exact utility inputs under that section header — nothing more. Do **not** add "where exactly in the
-utility" prose or item codes. Enter aggregate consideration/cost (never the net gain); the utility
-computes the balance. Example:
-
-```
-### STCG at slab — assets other than A1–A4
-| Source | Sale date | Consideration ₹ | Cost ₹ | Gain ₹ |
-| ...detail rows... |
-
-| Field | Value |
-|---|---|
-| Full value of consideration | 9,85,928 |
-| Cost of acquisition | 7,61,576 |
-| Cost of improvement | 0 |
-| Expenditure w&e in connection with transfer | 0 |
-```
-
-## 2. Machine-readable input (JSON)
-`tax_input.json` is the single input consumed by `compute_tax.ps1`, the per-schedule emitters, and
-`build_return.ps1`. All amounts in INR; omit what doesn't apply:
 ```json
 {
-  "taxpayer": "", "pan": "", "ay": "2026-27", "senior_citizen": false,
+  "taxpayer": "Synthetic Taxpayer",
+  "pan": "AAAAA0000A",
+  "ay": "2026-27",
+  "residential_status": "resident_and_ordinarily_resident",
+  "senior_citizen": false,
   "salary_gross": 0,
-  "salary_hra_exemption": 0, "salary_professional_tax": 0,
-  "other_sources": { "dividend": 0, "savings_interest": 0, "fd_interest": 0,
-    "dividend_quarterly": { "q1": 0, "q2": 0, "q3": 0, "q4": 0, "q5": 0 },
-    "interest_quarterly": { "q1": 0, "q2": 0, "q3": 0, "q4": 0, "q5": 0 } },
+  "salary_hra_exemption": 0,
+  "salary_professional_tax": 0,
+  "other_sources": {
+    "dividend": 0,
+    "savings_interest": 0,
+    "fd_interest": 0,
+    "interest": 0,
+    "other": 0,
+    "dividend_quarterly": {}
+  },
   "house_property": 0,
   "slab_rate_gains": 0,
-  "special_rate_gains": { "stcg_111a": 0, "ltcg_112a": 0, "ltcg_112": 0 },
+  "special_rate_gains": {
+    "stcg_111a": 0,
+    "ltcg_112a": 0,
+    "ltcg_112": 0
+  },
+  "capital_gains_manual": [],
   "deduction_80ccd2": 0,
-  "deductions_old": { "80c": 0, "80d": 0, "80tta_ttb": 0, "other": 0 },
-  "taxes_paid": { "tds": 0, "advance_tax": 0, "self_assessment_tax": 0, "ftc": 0 }
+  "deductions_old": {
+    "80c": 0,
+    "80d": 0,
+    "80tta_ttb": 0,
+    "other": 0
+  },
+  "taxes_paid": {
+    "tds": 0,
+    "advance_tax": 0,
+    "self_assessment_tax": 0,
+    "ftc": 0
+  },
+  "foreign_sources": []
 }
 ```
-- `special_rate_gains` come from `schedules/schedule_cg.ps1` (STT already excluded): 111a=listed-equity STCG,
-  112a=listed-equity LTCG (gross, before the ₹1.25L exemption the script applies), 112=bonds/SGB/foreign LTCG.
-- `slab_rate_gains` = capital gains taxed at slab rate, not a special rate: specified debt MFs (s.50AA),
-  foreign equity held <24m, unlisted-share STCG. They add to slab income (never to `other_sources`).
-- `capital_gains_manual` (optional) — CG heads **not** in a broker tradewise CSV (debt MF, foreign
-  equity, unlisted). `schedule_cg.ps1` appends each to the Schedule CG table. Each entry:
-  `{ "head": "...", "consideration": N, "cost": N, "expenditure": N (opt), "where": "Schedule CG A5 (STCG slab)", "quarter": "Q2 (16-Jun..15-Sep)" (opt) }`.
-  This makes the CG grid complete; the tax itself still comes from `slab_rate_gains`/`special_rate_gains`.
-- `deduction_80ccd2` (employer NPS) is allowed under **both** regimes; everything in `deductions_old`
-  is OLD-regime only.
-- `salary_hra_exemption` (s.10(13A)) and `salary_professional_tax` (s.16(iii)) reduce **salary** under the
-  **OLD regime only** — put them here, NOT in `deductions_old` (they are salary deductions, not Chapter VI-A).
-- `other_sources.dividend_quarterly` / `interest_quarterly` (optional) — the 234C credit-date split of
-  dividend and interest income, keyed `q1..q5` (the five FY periods). Populate them at extraction time from
-  the dividend report / AIS / bank certificate credit dates; each must sum to the matching annual figure
-  (`dividend`, and `savings_interest + fd_interest + interest`). Omit if credit dates aren't available —
-  the OS 234C grid is then skipped. See [../steps/07-quarterly-234c.md](../steps/07-quarterly-234c.md).
 
-## Tax calc reference (AY 2026-27)
-- **New regime slabs**: 0–4L nil; 4–8L 5%; 8–12L 10%; 12–16L 15%; 16–20L 20%; 20–24L 25%; >24L 30%.
-  Standard deduction ₹75,000. 87A rebate up to ₹12L total income (excludes special-rate income).
-- **Old regime slabs**: 0–2.5L nil (senior 0–3L); 2.5/3–5L 5%; 5–10L 20%; >10L 30%.
-  Standard deduction ₹50,000.
-- **Special rates** (both regimes): STCG 111A 20%; LTCG 112A 12.5% over ₹1.25L.
-- **Surcharge**: 10% >₹50L, 15% >₹1Cr, 25% >₹2Cr (capped at 15% for 111A/112A gains).
-- **Cess**: 4% health & education on tax+surcharge.
-- Confirm current-year slabs against the utility before finalising — rates change yearly.
+Omit optional empty blocks. Unknown top-level and nested keys fail validation.
+
+## House property
+
+`house_property` is the reviewed net amount. Optionally supply the components and make them reconcile:
+
+```json
+{
+  "house_property": -100000,
+  "house_property_detail": {
+    "annual_value": 0,
+    "municipal_tax": 0,
+    "home_loan_interest": 100000
+  }
+}
+```
+
+The computed value is annual value less municipal tax, 30% of net annual value, and home-loan interest. The tax engine limits house-property set-off against other income to ₹2,00,000.
+
+## Reviewed capital-gain contributions
+
+`capital_gains_manual[]` is a handoff from reviewed source computations. It is not a broker-ingestion surface.
+
+```json
+{
+  "head": "Indian equity STCG",
+  "tax_bucket": "stcg_111a",
+  "consideration": 120000,
+  "cost": 100000,
+  "expenditure": 100,
+  "stt": 500,
+  "rows": 4,
+  "source": "Reviewed Indian-equity contribution",
+  "where": "Schedule CG A2",
+  "quarter": "Q2 (16-Jun..15-Sep)"
+}
+```
+
+Allowed `tax_bucket` values:
+
+| Value | Annual field | Schedule CG / Section F |
+|---|---|---|
+| `stcg_111a` | `special_rate_gains.stcg_111a` | A2 / Row 1 |
+| `ltcg_112a` | `special_rate_gains.ltcg_112a` | B3 / Row 5 |
+| `ltcg_112` | `special_rate_gains.ltcg_112` | B8 / Row 5 |
+| `slab` or `slab_rate_gains` | `slab_rate_gains` | A5 / Row 3 |
+
+Instead of `quarter`, an entry may contain a `quarterly` object keyed by `q1` through `q5`. The quarterly sum must equal consideration minus cost and expenditure within ₹1.
+
+All contributions in each bucket must reconcile to its annual field. STT is tracked separately and is not deductible expenditure.
+
+Quarter labels, in order:
+
+1. `Q1 (<=15-Jun)`
+2. `Q2 (16-Jun..15-Sep)`
+3. `Q3 (16-Sep..15-Dec)`
+4. `Q4 (16-Dec..15-Mar)`
+5. `Q5 (16-Mar..31-Mar)`
+
+## Other-source quarterly disclosure
+
+When `other_sources.dividend` is non-zero, `dividend_quarterly` is required. Key it by `q1` through `q5`; it must tie to the annual figure. `other_quarterly` is available for the corresponding Schedule OS disclosure when applicable.
+
+Do not add `interest_quarterly`. It is intentionally rejected because the current Schedule OS quarterly disclosure used by this assembler is dividend-only for ordinary interest.
+
+## Foreign-source contribution
+
+Use one entry per country, income head, and relief basis:
+
+```json
+{
+  "country": "United States of America",
+  "country_code": "2",
+  "income_head": "Other Sources",
+  "gross_income": 50000,
+  "foreign_tax_paid": 12500,
+  "indian_tax_on_income": 15000,
+  "dtaa_tax_limit": 12500,
+  "relief_claimed": 12500,
+  "relief_section": "90",
+  "dtaa_article": "Article 10",
+  "form67_status": "filed",
+  "form67_acknowledgement": "SYNTHETIC-ACK",
+  "source": "Reviewed foreign-tax working"
+}
+```
+
+Rules:
+
+- `income_head` identifies the Schedule FSI income head; use the official utility wording such as `Other Sources` or `Capital Gains`.
+- `relief_section` must be `90` or `91`.
+- `form67_status` is mandatory: `pending`, `filed`, or `not_claiming`.
+- `not_claiming` requires zero `relief_claimed`.
+- Claimed section 90 relief requires `dtaa_tax_limit`.
+- `relief_claimed` cannot exceed foreign tax, Indian tax on that income, or the DTAA limit where applicable.
+- If present, `taxes_paid.ftc` must equal total `relief_claimed`.
+- Foreign gross income under `Other Sources` must already be included in `other_sources`.
+- Foreign sources currently require `resident_and_ordinarily_resident` status.
+
+## Optional consolidated Schedule 112A
+
+```json
+{
+  "schedule_112a": {
+    "template_path": "112a-header.csv",
+    "full_value": 120000,
+    "cost": 100000,
+    "expenditure": 0
+  }
+}
+```
+
+Use the exact one-line header exported by the current official utility. The assembler emits the preserved V1 consolidated row and verifies that the balance reconciles to `special_rate_gains.ltcg_112a`.
+
+This compact mode is suitable only when a reviewed consolidated entry is accepted for the filing. Keep per-scrip source workings separately. Schedule FA A2/A3 is not part of this contract; use the foreign-equity skill's strict FA artifact directly.
+
+## Generate the working set
+
+```shell
+python scripts/verify_input.py --input-json tax_input.json
+python scripts/build_return.py --input-json tax_input.json --out-dir skill_output
+```
+
+Outputs:
+
+```text
+skill_output/
+  return.json
+  ITR2_data_entry.md
+  Schedule112A.csv   # only when schedule_112a is present
+```

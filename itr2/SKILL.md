@@ -1,108 +1,66 @@
 ---
 name: itr2
-description: 'Compute Indian ITR-2 capital gains and other-source income from broker/AIS documents and map them into the Income-Tax offline utility. USE WHEN: user is filing an Indian income-tax return (ITR-2/AY), has capital gains from stocks or mutual funds, needs STCG/LTCG/OS figures computed, needs a Schedule 112A CSV built for upload, asks where to enter values in the ITR utility, wants to reconcile broker statements against AIS/TIS, or holds foreign stocks/ESPP/RSU/foreign dividends needing Schedule FA and FTC. Handles Groww/Zerodha/broker capital-gains reports, Form 16, AIS, TIS, dividend reports, bank interest certificates, and foreign broker/ESPP statements. DO NOT USE FOR: business/professional income (needs ITR-3), non-Indian tax returns, or GST.'
-argument-hint: 'Point to the folder containing the tax documents'
+version: 2.0.0
+description: Assemble and validate an Indian AY 2026-27 ITR-2 working set from reviewed salary, house-property, other-source, capital-gain, FSI/TR, tax-paid, and optional Schedule 112A contributions. Use when the user needs final ITR-2 schedule mapping, old/new regime comparison, tax computation, reconciliation, or data-entry artifacts. Do not use it to parse Indian or foreign broker statements, create Schedule FA A2/A3 CSVs, file a return, or handle business income requiring ITR-3.
+allowed-tools: Read, Write, Bash, Glob, Grep
 ---
 
-# ITR-2 Capital Gains & Income Computation
+# ITR-2 Final Return Assembler
 
-Compute capital gains (STCG/LTCG), other-source income, and produce the Schedule 112A CSV for India's
-ITR-2, then tell the user exactly where each value goes in the offline utility.
+Build the final return working set from immutable, reviewed contributions. Keep source-level computation in the relevant source skill.
 
-## When to Use
-- Filing an Indian ITR-2 with capital gains from listed shares and/or mutual funds.
-- Building an uploadable Schedule 112A CSV.
-- Reconciling broker statements against AIS/TIS.
-- Deciding OLD vs NEW regime.
+## Boundaries
 
-## How this skill is organised
-Each step below is a short instruction here plus a detailed file under [steps/](./steps/). **Load a
-step's file only when you reach it** (progressive disclosure) — and skip steps that don't apply to this
-taxpayer (e.g. no 112A LTCG → skip Step 5; no foreign assets → skip Step 9). Shared lookup tables live in
-[references/](./references/); deterministic computation lives in [scripts/](./scripts/).
+Use a companion source skill first when the user has raw broker data:
 
-## Entry routing
-Users often arrive mid-flow. Match the request and jump straight to that step (still capture the shared
-work context first — see below); walk the full 1→8 spine only for an open-ended "help me file".
+- Indian listed shares or equity mutual funds: use `indian-listed-equity`.
+- Foreign shares, ESPP, RSU, dividends, Schedule FA, and foreign-currency conversion: use `foreign-equity`.
 
-| User intent | Go to |
-|---|---|
-| "Which ITR form do I file?", intraday/F&O question | Step 2 |
-| "Read/open this broker file", password-protected PDF | Step 3 |
-| "Compute/classify my capital gains", STCG/LTCG buckets | Step 4 |
-| "Build my 112A CSV", upload rejected | Step 5 |
-| "Reconcile against AIS/TIS" | Step 6 |
-| "Quarterly / 234C breakup" | Step 7 |
-| "Compare OLD vs NEW regime", "compute my tax", final sheet | Step 8 |
-| Foreign stocks / ESPP / RSU / foreign dividend / Schedule FA / FTC | Step 9 |
-| "Which schedules do I tick?" | [steps/schedule-selection.md](./steps/schedule-selection.md) |
+This skill accepts the reviewed outputs of those skills. It must not reproduce their lot matching, grandfathering, fair-market-value, exchange-rate, or FA CSV logic.
 
-## Steps
-1. **Collect documents** — gather broker/AIS/salary/foreign docs; clarify residency, age, regime.
-   Load [steps/01-collect-docs.md](./steps/01-collect-docs.md). Always ask about foreign holdings.
-2. **Select the ITR form** — confirm ITR-2 fits (intraday/F&O → ITR-3, out of scope).
-   Load [steps/02-select-itr-form.md](./steps/02-select-itr-form.md).
-3. **Read the documents** — xlsx magic bytes, `read_xlsx.ps1`, PDF passwords.
-   Load [steps/03-read-documents.md](./steps/03-read-documents.md).
-4. **Compute & bucket the gains** — classify each gain into 111A / slab / 112A / 112; run `schedule_cg.ps1`.
-   Load [steps/04-compute-bucket-cg.md](./steps/04-compute-bucket-cg.md).
-5. **Build the Schedule 112A CSV** — only if there is listed-equity LTCG. `schedule_112a.ps1`.
-   Load [steps/05-schedule-112a.md](./steps/05-schedule-112a.md).
-6. **Reconcile against AIS** — report the AIS figure for rounding-size differences.
-   Load [steps/06-reconcile-ais.md](./steps/06-reconcile-ais.md).
-7. **Quarterly breakup (234C)** — split each head by sale-quarter; net losses forward.
-   Load [steps/07-quarterly-234c.md](./steps/07-quarterly-234c.md).
-8. **Regime comparison & output** — fill `tax_input.json`; run `build_return.ps1`; produce the tick-list.
-   Load [steps/08-regime-and-output.md](./steps/08-regime-and-output.md).
+Stop and route to ITR-3 for intraday, F&O, or other business/professional income. Never submit or e-verify the return.
 
-Conditional:
-- **Foreign assets** (stocks / ESPP / RSU / foreign dividends / Schedule FA / FTC): if any, load
-  [steps/09-foreign-assets.md](./steps/09-foreign-assets.md).
-- **Schedule tick-list** for the utility's "Select Schedule" step:
-  [steps/schedule-selection.md](./steps/schedule-selection.md).
+## Workflow
 
-## Pipeline at a glance
-`tax_input.json` is the single source of truth. [scripts/build_return.ps1](./scripts/build_return.ps1)
-runs `compute_tax.ps1` + every `schedules/schedule_*.ps1` (each self-skips when its input is absent); each
-merges its section into a single **`return.json`**, which `build_return.ps1` renders into one
-`ITR2_data_entry.md`. `schedule_112a.ps1` also writes the uploadable `Schedule112A.csv`. See
-[references/output-template.md](./references/output-template.md) for deliverable shapes.
+1. Confirm AY 2026-27, individual taxpayer, and ITR-2 eligibility.
+2. Preserve all source documents. Create or update a separate `tax_input.json`; never modify source statements.
+3. Enter reviewed annual and quarterly contributions using the contract in [references/output-template.md](references/output-template.md).
+4. For each section 90/91 FSI item, obtain explicit Indian tax on that income, foreign tax paid, relief claimed, and Form 67 status. Section 90 also requires the reviewed DTAA tax limit.
+5. Validate before calculating:
 
-## Session state (survive long sessions / compaction)
-Keep two files in the working folder as the durable context, so a jump to any step or a resumed session
-stays consistent:
-- **`tax_input.json`** — the numeric inputs (schema in output-template.md).
-- **`work-context.json`** — the filing decisions: taxpayer/PAN, AY, **residential status**, senior-citizen
-  flag, **chosen ITR form + why**, **chosen regime + why**, foreign-assets yes/no, which schedules apply,
-  AIS-reconciliation status, any logged FX rates, and the current step. Write it early (Step 1–2) and
-  update it as decisions are made; re-read it before resuming or jumping mid-flow.
+   ```shell
+   python scripts/verify_input.py --input-json <path/to/tax_input.json>
+   ```
 
-## Extending to other ITR forms
-This skill is ITR-2-specific but built to generalise. When adding a sibling (e.g. `itr3` for
-business/F&O income), reuse rather than fork:
-- **Reusable as-is:** `scripts/read_xlsx.ps1`, `scripts/compute_tax.ps1` (slabs/surcharge/regime are
-  form-independent), `scripts/schedules/schedule_{s,hp,os,via,cg,112a}.ps1`, `build_return.ps1`, the
-  `references/` lookup tables, and steps 1, 3, 6, 7, 8, 9 + `schedule-selection.md` (largely form-agnostic).
-- **Form-specific:** the `description`/`name` frontmatter, Step 2 (form selection), and any new schedules
-  (e.g. Schedule BP for business income). Add those as new `steps/` files and new `schedules/*.ps1`.
-- Keep the same contract: one orchestrator SKILL.md → on-demand `steps/*.md` → shared `scripts/` + a
-  single `tax_input.json` + `work-context.json`. Promote genuinely shared assets to a common location
-  only when a second form actually needs them (avoid speculative abstraction).
+6. Resolve every failure. Warnings require review and disclosure but do not block a draft.
+7. Build once:
 
-## Security & confirmation boundaries
+   ```shell
+   python scripts/build_return.py --input-json <path/to/tax_input.json> --out-dir <output-directory>
+   ```
 
-### CAN (do freely)
-- Read the user's tax documents, compute figures, run the scripts, and produce the data-entry sheet and CSVs.
-- Recommend a regime/form and explain the reasoning.
+8. Review both regime columns in `ITR2_data_entry.md`. Use `--regime old` or `--regime new` only for an informed override.
+9. Reconcile income and tax with Form 16, AIS/TIS, Form 26AS, broker/source-skill outputs, and bank records.
+10. Enter the reviewed figures into the official utility and run its own validation.
 
-### CANNOT (never do)
-- **File, submit, or e-verify** the return, or log into the income-tax portal on the user's behalf.
-- Invent missing figures, rates, or FX values — if a source is missing, say so and stop at that line.
-- Treat computed numbers as final without AIS/TIS reconciliation (Step 6).
-- Give definitive legal/tax advice — present computations and cite the rule; the filing decision is the user's.
+## Input rules
 
-### MUST CONFIRM (pause and ask)
-- Any figure that is **estimated** (e.g. an FX rate proxy, a back-derived cost basis) — flag it clearly.
-- Choosing a form that a disqualifier forces unexpectedly (e.g. intraday → ITR-3, out of scope here).
-- Overriding the script-recommended regime, or entering net gain instead of aggregate consideration/cost.
-- Any action that writes outside the working folder.
+- `capital_gains_manual[]` means reviewed schedule contributions, not arbitrary overrides.
+- Every capital-gain entry needs `tax_bucket`, consideration, cost, expenditure if any, and its utility destination.
+- Annual capital-gain fields must tie to the sum of contributions.
+- If contribution-level quarters are supplied, they must tie to that contribution's gain.
+- `other_sources.dividend_quarterly` is required when dividends are non-zero. Do not add `interest_quarterly`; current Schedule OS quarterly disclosure for ordinary interest is intentionally absent.
+- `foreign_sources[]` must tie to the appropriate annual other-source or capital-gain figure.
+- A claimed FTC must equal the sum of reviewed source relief and cannot exceed the applicable lower-of limits.
+- The optional Schedule 112A block emits the preserved consolidated V1 row. Its balance must reconcile to `special_rate_gains.ltcg_112a`.
+- Schedule FA remains outside this skill. Use the source skill's strict FA output directly.
+
+## Output
+
+The build produces:
+
+- `return.json`
+- `ITR2_data_entry.md`
+- optional `Schedule112A.csv`
+
+Treat them as working papers, not a filed return. Never silently correct or overwrite `tax_input.json`.

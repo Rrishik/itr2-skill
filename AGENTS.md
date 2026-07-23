@@ -1,8 +1,7 @@
 # AGENTS.md
 
-This repository packages two portable **Agent Skills**: `itr/` (a thin umbrella that routes to the
-right ITR form) and `itr2/` (the ITR-2 capital-gains computation assistant for Indian income-tax
-filing).
+This repository packages two portable **Agent Skills**: `itr/` (a thin form router) and `itr2/`
+(the AY 2026-27 ITR-2 final-return assembler).
 
 ## Installing these skills on request
 
@@ -13,10 +12,8 @@ agent"* after cloning, do the following:
    - **VS Code Copilot** → `~/.agents/skills/`
    - **Claude Code** → `~/.claude/skills/`
    - **GitHub Copilot CLI** → `~/.copilot/skills/`
-2. Copy both the `itr/` and `itr2/` folders into that directory. Prefer the bundled helper if the
-   environment can run it:
-   - PowerShell: `./install.ps1 <copilot|claude|copilot-cli>`
-   Otherwise copy the folders directly (`Copy-Item` / `cp -r`).
+2. Install both folders with `python install.py <copilot|claude|copilot-cli>`. If Python is not
+   available, copy `itr/` and `itr2/` directly.
 3. Confirm the destination now contains `itr/SKILL.md` and `itr2/SKILL.md`, and tell the user to
    reload their agent so the skills are picked up.
 

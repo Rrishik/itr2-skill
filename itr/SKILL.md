@@ -31,10 +31,9 @@ Once the form is decided, **invoke the form skill** (e.g. `itr2`) and let it dri
 
 ## Shared work context
 
-Persist the routing decision so the form skill and any resumed session stay consistent. Write
-`work-context.json` in the working folder with at least: taxpayer/PAN, AY, residential status,
-senior-citizen flag, **chosen form + reason**, income-mix flags (business?, intraday/F&O?, foreign
-assets?), and the current phase. The form skill reads and extends this file.
+Pass the chosen form, reason, AY, residential status, senior-citizen flag, and income-mix findings to
+the form skill. The ITR-2 assembler persists reviewed filing figures in its immutable
+`tax_input.json`; do not create a second source of truth.
 
 ## Security & confirmation boundaries
 

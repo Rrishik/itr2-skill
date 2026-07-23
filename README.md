@@ -1,60 +1,73 @@
-# ITR-2 Capital Gains Skill
+# ITR-2 Final Return Assembler
 
-A portable [Agent Skill](https://code.visualstudio.com/docs/copilot/copilot-customization) that
-computes Indian **ITR-2** capital gains and other-source income from your broker / AIS documents,
-builds the **Schedule 112A** upload CSV, and maps every value to the right box in the Income-Tax
-offline utility. Covers STCG/LTCG (111A/112A/112/slab), dividends & interest, foreign stocks/ESPP/RSU
-(vest-date holding test, Rule 115/128 currency conversion, Schedule FA, DTAA FTC via Form 67),
-AIS/TIS reconciliation, the 234C quarterly grid, OLD vs NEW regime, and ITR-1/2/3/4 form selection.
+A portable agent skill that validates reviewed AY 2026-27 ITR-2 contributions and creates a single return working set:
 
-> **Not tax advice.** A computation aid — verify every figure against the official utility and your
-> source documents before filing. Rates reflect FY2025-26 / AY2026-27 (post-23-Jul-2024).
+- `return.json` — structured schedule and tax-comparison rows.
+- `ITR2_data_entry.md` — a schedule-by-schedule utility entry sheet.
+- `Schedule112A.csv` — optional strict utility CSV using the downloaded template header.
+
+The assembler does not parse broker statements or compute source-level Indian or foreign equity. Those calculations belong in the companion `indian-listed-equity` and `foreign-equity` skills. Copy only their reviewed filing contributions into the immutable `tax_input.json` contract.
+
+> **Not tax advice.** Verify every figure against source documents, AIS/TIS, Form 26AS, and the official utility before filing. Rates are fixed to FY 2025-26 / AY 2026-27.
+
+## Requirements
+
+- Python 3.9 or later.
+- No third-party packages.
+- `pdftotext` remains optional for reading source PDFs outside this assembler.
 
 ## Install
 
-The repo ships two skills: **`itr`** (a thin umbrella that routes to the right ITR form) and **`itr2`**
-(the capital-gains form skill that does the work). Clone, then drop them into your agent's skills directory:
+The repository bundles the thin `itr` form router and the `itr2` final assembler:
 
-| Agent | Skills directory |
-|---|---|
-| VS Code Copilot | `~/.agents/skills/` |
-| Claude Code | `~/.claude/skills/` |
-| GitHub Copilot CLI | `~/.copilot/skills/` |
-
-Easiest — from the cloned repo, run the helper (or just open the repo and tell your agent
-**"install this skill"**, per [AGENTS.md](./AGENTS.md)):
-
-```powershell
-.\install.ps1 claude       # copilot (default) | claude | copilot-cli
+```shell
+python install.py copilot
+python install.py claude
+python install.py copilot-cli
 ```
 
-Reload your agent afterward. The bundled scripts need **PowerShell** (and `pdftotext` for AIS PDFs);
-without them those steps just become manual.
+The default target is `copilot`. Reload the agent after installation.
 
-## Recommendations
+## Run
 
-- **Model:** run this skill with **Claude Opus 4.8** — the multi-step reconciliation, regime
-  comparison, and tax-law reasoning benefit from the stronger model.
-- **Playwright MCP** (for foreign income): SBI does not publish historical TT buying rates openly and
-  the RBI/FBIL rate pages are JavaScript date-picker forms that a plain fetch can't read. Install the
-  [Playwright MCP server](https://github.com/microsoft/playwright-mcp) so the agent can drive the
-  **RBI reference-rate archive** (rbi.org.in → Reference Rate Archive) to pull authentic USD/INR rates
-  for each transaction/month-end date (RBI mid is the standard citable proxy for SBI TTBR).
+```shell
+python itr2/scripts/verify_input.py --input-json sources/tax_input.json
+python itr2/scripts/build_return.py --input-json sources/tax_input.json --out-dir skill_output
+```
 
-## Usage
+Use `--regime old` or `--regime new` only after reviewing an override of the computed recommendation.
 
-Point your agent at the folder with your tax documents:
+To inspect a modern Excel workbook without Excel:
 
-> Compute my ITR-2 capital gains for the documents in `./tax-docs/`.
+```shell
+python itr2/scripts/read_xlsx.py --path source.xlsx
+```
 
-It asks for whatever applies (broker reports, Form 16, AIS, TIS, dividend / bank-interest / foreign
-broker statements), then produces a data-entry sheet and the 112A CSV.
+Legacy binary `.xls` files are rejected with a request to re-export as `.xlsx` or `.csv`.
+
+## Design boundaries
+
+- `tax_input.json` is read-only and never rewritten.
+- Source calculations and Schedule FA A2/A3 CSVs stay in the companion source skills.
+- FSI/TR rows use explicit reviewed income, tax, DTAA cap, relief, and Form 67 status. The assembler validates the lower-of limits; it does not estimate them.
+- Intraday, F&O, and business income require ITR-3 and are out of scope.
+- The scripts never file, submit, or e-verify a return.
+
+See [itr2/references/output-template.md](itr2/references/output-template.md) for the input contract and [itr2/references/schedule-mapping.md](itr2/references/schedule-mapping.md) for utility mappings.
+
+## Tests
+
+```shell
+cd itr2
+python -B -m unittest discover -s tests -p "test_*.py" -v
+```
+
+All fixtures are synthetic.
 
 ## Privacy
 
-The skill runs **inside folders holding sensitive data** (PAN, AIS PDFs, broker CSVs). Never commit
-those — the bundled `.gitignore` blocks common patterns, but review before pushing.
+The skill runs in folders containing PAN, salary, AIS, and broker data. The bundled ignore rules block common personal artifacts, but always inspect pending changes before committing.
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](LICENSE)
